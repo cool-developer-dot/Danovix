@@ -1,4 +1,4 @@
-/** Temporary static product — swappable for R3F GLB */
+/** Signature marble podium — must live in /public for Vercel static serving */
 export const SIGNATURE_PRODUCT_ASSET = "/imag-removebg-preview.png" as const;
 
 export const SIGNATURE_PRODUCT_WIDTH = 564;

@@ -1,7 +1,13 @@
 import { HERO_3D_ENABLED } from "@/lib/hero-3d";
 import { HERO_PRODUCT_ASSET } from "@/lib/hero-product/constants";
+import { SIGNATURE_PRODUCT_ASSET } from "@/lib/signature-collection/constants";
 
-const CRITICAL_ASSETS = ["/bg.webp", "/logo.webp", HERO_PRODUCT_ASSET] as const;
+const CRITICAL_ASSETS = [
+  "/bg.webp",
+  "/logo.webp",
+  HERO_PRODUCT_ASSET,
+  SIGNATURE_PRODUCT_ASSET,
+] as const;
 
 function preloadImage(src: string) {
   const image = new window.Image();
