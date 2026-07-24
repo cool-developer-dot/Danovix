@@ -21,7 +21,9 @@ type DeferredSectionProps = {
 /**
  * Viewport-gated mount for below-the-fold dynamic sections.
  * Preserves layout height so scroll position stays stable.
- * When `id` matches a pending home hash, mounts immediately so nav can land.
+ *
+ * Hash / eager mounting happens only after hydration so server HTML and the
+ * first client paint always match (minHeight placeholder, no children).
  */
 export function DeferredSection({
   children,
@@ -32,11 +34,11 @@ export function DeferredSection({
   className,
   "aria-hidden": ariaHidden,
 }: DeferredSectionProps) {
-  const hashEager = Boolean(id && peekHomeHash() === id);
-
   const { sentinelRef, mounted } = useDeferredMount({
     rootMargin,
-    eager: eager || hashEager,
+    eager,
+    hashId: id,
+    peekHash: peekHomeHash,
   });
 
   return (

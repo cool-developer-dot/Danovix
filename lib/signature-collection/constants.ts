@@ -1,5 +1,5 @@
-/** Signature marble podium — must live in /public for Vercel static serving */
-export const SIGNATURE_PRODUCT_ASSET = "/imag-removebg-preview.png" as const;
+/** Signature marble podium disc — ProductJourney bag lands here. */
+export const SIGNATURE_PRODUCT_ASSET = "/signature-marble.webp" as const;
 
 export const SIGNATURE_PRODUCT_WIDTH = 564;
 export const SIGNATURE_PRODUCT_HEIGHT = 443;

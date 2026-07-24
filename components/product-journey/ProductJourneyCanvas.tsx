@@ -128,7 +128,8 @@ type ProductJourneyCanvasProps = {
 
 export function ProductJourneyCanvas({ active }: ProductJourneyCanvasProps) {
   const canvasHostRef = useRef<HTMLDivElement>(null);
-  useJourneyInteraction(canvasHostRef, active);
+  const hitRef = useRef<HTMLDivElement>(null);
+  useJourneyInteraction(hitRef, active);
 
   const dpr = useMemo(() => getPreferredDpr(1.5), []);
   const shadowResolution = useMemo(() => {
@@ -190,6 +191,15 @@ export function ProductJourneyCanvas({ active }: ProductJourneyCanvasProps) {
           </Suspense>
         </Canvas>
       )}
+
+      {/* Compact grab zone around the bag only — editorial text stays selectable */}
+      <div
+        ref={hitRef}
+        data-product-journey="interaction-hit"
+        className="pointer-events-none absolute left-0 top-0 z-[31] touch-none will-change-transform"
+        style={{ width: 0, height: 0 }}
+        aria-hidden="true"
+      />
     </div>
   );
 }

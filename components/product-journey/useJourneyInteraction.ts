@@ -9,20 +9,53 @@ import {
   subscribeProductJourney,
 } from "@/lib/product-journey/store";
 
+/** Extra padding around the bag so the pedestal rim stays easy to grab. */
+const HIT_PAD = 1.45;
+const HIT_ASPECT = 1.2;
+
 /**
- * Momentum drag (desktop + touch) — only after the bag has landed.
- * Mutates journey store yaw/pitch; never causes React renders.
- * rAF runs only while dragging or residual velocity remains.
+ * Position a compact hit target over the bag so the left editorial column
+ * stays selectable — the full-screen canvas never receives pointer events.
+ */
+function syncHitTarget(hit: HTMLElement) {
+  const state = productJourneyState;
+  if (!state.interactiveEnabled || !state.canvasVisible) {
+    hit.style.pointerEvents = "none";
+    hit.style.cursor = "";
+    hit.style.touchAction = "";
+    hit.setAttribute("aria-hidden", "true");
+    return;
+  }
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const width = Math.max(160, state.screenWidthPx * HIT_PAD);
+  const height = width * HIT_ASPECT;
+  const left = state.x * vw - width / 2;
+  const top = state.y * vh - height / 2;
+
+  hit.style.width = `${width}px`;
+  hit.style.height = `${height}px`;
+  hit.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+  hit.style.pointerEvents = "auto";
+  hit.style.cursor = "grab";
+  hit.style.touchAction = "none";
+  hit.setAttribute("aria-hidden", "false");
+}
+
+/**
+ * Momentum drag (desktop + touch) — only after the bag has landed,
+ * and only within the bag-surround hit target (never over editorial copy).
  */
 export function useJourneyInteraction(
-  hostRef: RefObject<HTMLElement | null>,
+  hitRef: RefObject<HTMLElement | null>,
   active: boolean,
 ) {
   useEffect(() => {
     if (!active) return;
 
-    const host = hostRef.current;
-    if (!host) return;
+    const hit = hitRef.current;
+    if (!hit) return;
 
     let dragging = false;
     let lastX = 0;
@@ -30,6 +63,7 @@ export function useJourneyInteraction(
     let velocityYaw = 0;
     let velocityPitch = 0;
     let raf = 0;
+    let layoutRaf = 0;
 
     const maxPitch =
       PRODUCT_JOURNEY.interaction.maxPitchDeg * (Math.PI / 180);
@@ -87,17 +121,28 @@ export function useJourneyInteraction(
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
+    const scheduleHitSync = () => {
+      if (layoutRaf) return;
+      layoutRaf = requestAnimationFrame(() => {
+        layoutRaf = 0;
+        syncHitTarget(hit);
+      });
+    };
+
     const onPointerDown = (event: PointerEvent) => {
       if (!productJourneyState.interactiveEnabled) return;
+      // Ignore if somehow outside the hit target (defensive).
+      if (event.currentTarget !== hit) return;
+
       dragging = true;
       lastX = event.clientX;
       lastY = event.clientY;
       velocityYaw = 0;
       velocityPitch = 0;
-      host.setPointerCapture(event.pointerId);
-      host.style.pointerEvents = "auto";
-      host.style.cursor = "grabbing";
+      hit.setPointerCapture(event.pointerId);
+      hit.style.cursor = "grabbing";
       ensureLoop();
+      event.preventDefault();
     };
 
     const onPointerMove = (event: PointerEvent) => {
@@ -130,51 +175,36 @@ export function useJourneyInteraction(
       if (!dragging) return;
       dragging = false;
       try {
-        host.releasePointerCapture(event.pointerId);
+        hit.releasePointerCapture(event.pointerId);
       } catch {
         /* already released */
       }
-      host.style.cursor = productJourneyState.interactiveEnabled
-        ? "grab"
-        : "";
-      if (!productJourneyState.interactiveEnabled) {
-        host.style.pointerEvents = "none";
-      }
+      hit.style.cursor = productJourneyState.interactiveEnabled ? "grab" : "";
       ensureLoop();
     };
 
-    const syncPointerMode = () => {
-      if (
-        productJourneyState.interactiveEnabled &&
-        productJourneyState.canvasVisible
-      ) {
-        host.style.pointerEvents = "auto";
-        host.style.cursor = "grab";
-        host.style.touchAction = "none";
-        ensureLoop();
-      } else {
-        host.style.pointerEvents = "none";
-        host.style.cursor = "";
-        host.style.touchAction = "";
-        if (!dragging) stopLoop();
-      }
-    };
+    const onResize = () => scheduleHitSync();
 
-    syncPointerMode();
-    const unsub = subscribeProductJourney(syncPointerMode);
+    syncHitTarget(hit);
+    const unsub = subscribeProductJourney(scheduleHitSync);
+    window.addEventListener("resize", onResize, { passive: true });
 
-    host.addEventListener("pointerdown", onPointerDown);
-    host.addEventListener("pointermove", onPointerMove);
-    host.addEventListener("pointerup", endDrag);
-    host.addEventListener("pointercancel", endDrag);
+    hit.addEventListener("pointerdown", onPointerDown);
+    hit.addEventListener("pointermove", onPointerMove);
+    hit.addEventListener("pointerup", endDrag);
+    hit.addEventListener("pointercancel", endDrag);
 
     return () => {
       stopLoop();
+      if (layoutRaf) cancelAnimationFrame(layoutRaf);
       unsub();
-      host.removeEventListener("pointerdown", onPointerDown);
-      host.removeEventListener("pointermove", onPointerMove);
-      host.removeEventListener("pointerup", endDrag);
-      host.removeEventListener("pointercancel", endDrag);
+      window.removeEventListener("resize", onResize);
+      hit.removeEventListener("pointerdown", onPointerDown);
+      hit.removeEventListener("pointermove", onPointerMove);
+      hit.removeEventListener("pointerup", endDrag);
+      hit.removeEventListener("pointercancel", endDrag);
+      hit.style.pointerEvents = "none";
+      hit.style.cursor = "";
     };
-  }, [hostRef, active]);
+  }, [hitRef, active]);
 }
