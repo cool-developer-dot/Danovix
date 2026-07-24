@@ -48,9 +48,10 @@ export const PRODUCT_JOURNEY = {
    */
   scale: {
     desktop: { start: 1, mid: 0.78, end: 0.52 },
-    tablet: { start: 0.95, mid: 0.74, end: 0.5 },
-    largePhone: { start: 0.9, mid: 0.7, end: 0.55 },
-    smallPhone: { start: 0.86, mid: 0.68, end: 0.58 },
+    tablet: { start: 0.9, mid: 0.68, end: 0.46 },
+    /** Slimmer on phones so the pedestal reads elegant, not oversized */
+    largePhone: { start: 0.78, mid: 0.58, end: 0.4 },
+    smallPhone: { start: 0.72, mid: 0.52, end: 0.36 },
   },
   /** Controlled commercial rotation — never 360 */
   rotation: {

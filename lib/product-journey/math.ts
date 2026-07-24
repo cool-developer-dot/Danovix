@@ -100,20 +100,31 @@ export function sampleJourneyScale(
 
 export function sampleRotationY(progress: number) {
   const keys = PRODUCT_JOURNEY.rotation.keyframes;
-  if (progress <= keys[0].t) return keys[0].y;
-  if (progress >= keys[keys.length - 1].t) return keys[keys.length - 1].y;
+  let deg = 0;
 
-  for (let i = 0; i < keys.length - 1; i++) {
-    const a = keys[i];
-    const b = keys[i + 1];
-    if (progress >= a.t && progress <= b.t) {
-      const local = (progress - a.t) / (b.t - a.t);
-      const eased = smoothstep(0, 1, local);
-      return lerp(a.y, b.y, eased);
+  if (progress <= keys[0].t) {
+    deg = keys[0].y;
+  } else if (progress >= keys[keys.length - 1].t) {
+    deg = keys[keys.length - 1].y;
+  } else {
+    for (let i = 0; i < keys.length - 1; i++) {
+      const a = keys[i];
+      const b = keys[i + 1];
+      if (progress >= a.t && progress <= b.t) {
+        const local = (progress - a.t) / (b.t - a.t);
+        const eased = smoothstep(0, 1, local);
+        deg = lerp(a.y, b.y, eased);
+        break;
+      }
     }
   }
 
-  return 0;
+  // Softer yaw on phones so scroll feels like travel, not a spin fight.
+  if (typeof window !== "undefined" && window.innerWidth < 768) {
+    return deg * 0.45;
+  }
+
+  return deg;
 }
 
 /** Build cubic control points for a smooth commercial arc onto the marble. */
@@ -159,23 +170,37 @@ export function getElementAnchor(el: Element | null): Vec2 | null {
   };
 }
 
+export type JourneyAnchorElements = {
+  heroStage?: HTMLElement | null;
+  heroCavity?: HTMLElement | null;
+  signatureRest?: HTMLElement | null;
+  signatureMarble?: HTMLElement | null;
+};
+
 /**
  * Exact hero rest pose:
  * bag bottom-center sits on the pedestal surface center.
  * Measured from live layout — not hardcoded pixel offsets.
+ * Pass cached elements to avoid querySelector on every scrub tick.
  */
-export function measureHeroRestPose(): HeroRestPose | null {
-  const stage = document.querySelector(
-    '[data-journey-anchor="hero"]',
-  ) as HTMLElement | null;
+export function measureHeroRestPose(
+  elements?: Pick<JourneyAnchorElements, "heroStage" | "heroCavity">,
+): HeroRestPose | null {
+  const stage =
+    elements?.heroStage ??
+    (document.querySelector(
+      '[data-journey-anchor="hero"]',
+    ) as HTMLElement | null);
   if (!stage) return null;
 
   const stageRect = stage.getBoundingClientRect();
   if (stageRect.width < 2 || stageRect.height < 2) return null;
 
-  const surfaceEl = document.querySelector(
-    '[data-journey-anchor="hero-cavity"]',
-  ) as HTMLElement | null;
+  const surfaceEl =
+    elements?.heroCavity ??
+    (document.querySelector(
+      '[data-journey-anchor="hero-cavity"]',
+    ) as HTMLElement | null);
 
   let cavity: Vec2;
   if (surfaceEl) {
@@ -241,17 +266,24 @@ export function measureHeroEmergeRange(pose: HeroRestPose): {
 /**
  * Signature marble TRUE visual center (top disk surface).
  * Prefer the dedicated rest anchor; fall back to stage bbox center.
+ * Pass cached elements to avoid querySelector on every scrub tick.
  */
-export function measureSignatureMarbleCenter(): Vec2 | null {
-  const rest = document.querySelector(
-    '[data-journey-anchor="signature-rest"]',
-  ) as HTMLElement | null;
+export function measureSignatureMarbleCenter(
+  elements?: Pick<JourneyAnchorElements, "signatureRest" | "signatureMarble">,
+): Vec2 | null {
+  const rest =
+    elements?.signatureRest ??
+    (document.querySelector(
+      '[data-journey-anchor="signature-rest"]',
+    ) as HTMLElement | null);
   const fromRest = getElementAnchor(rest);
   if (fromRest) return fromRest;
 
-  const marble = document.querySelector(
-    '[data-journey-anchor="signature-marble"]',
-  ) as HTMLElement | null;
+  const marble =
+    elements?.signatureMarble ??
+    (document.querySelector(
+      '[data-journey-anchor="signature-marble"]',
+    ) as HTMLElement | null);
   const fromMarble = getElementAnchor(marble);
   if (!fromMarble || !marble) return fromMarble;
 

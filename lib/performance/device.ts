@@ -25,6 +25,19 @@ export function getPreferredDpr(max = 1.5): [number, number] {
   return [1, max];
 }
 
+/**
+ * Touch phones / coarse pointers — drag-to-rotate fights vertical scroll.
+ * Prefer native page scroll on these devices.
+ */
+export function isCoarsePointerDevice(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(pointer: coarse)").matches) return true;
+  if (window.matchMedia("(hover: none)").matches && window.innerWidth < 1024) {
+    return true;
+  }
+  return window.innerWidth < 768;
+}
+
 export function prefersReducedData(): boolean {
   if (typeof window === "undefined") return false;
   const connection = (

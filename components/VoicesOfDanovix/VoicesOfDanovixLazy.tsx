@@ -14,7 +14,7 @@ const VoicesOfDanovix = dynamic(
 
 export function VoicesOfDanovixLazy() {
   return (
-    <DeferredSection minHeight="100vh" rootMargin="640px 0px">
+    <DeferredSection minHeight="100vh" rootMargin="280px 0px">
       <VoicesOfDanovix />
     </DeferredSection>
   );

@@ -29,7 +29,7 @@ export function DeferredSection({
   children,
   id,
   minHeight = "50vh",
-  rootMargin = "480px 0px",
+  rootMargin = "320px 0px",
   eager = false,
   className,
   "aria-hidden": ariaHidden,

@@ -17,7 +17,7 @@ export function CraftsmanshipLazy() {
     <DeferredSection
       id="craftsmanship"
       minHeight="110vh"
-      rootMargin="560px 0px"
+      rootMargin="360px 0px"
     >
       <Craftsmanship />
     </DeferredSection>

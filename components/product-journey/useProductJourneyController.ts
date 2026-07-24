@@ -8,12 +8,13 @@ import {
   HERO_PRODUCT_EMERGE,
   HERO_PRODUCT_TIMING,
 } from "@/lib/hero-product/constants";
+import { isCoarsePointerDevice } from "@/lib/performance/device";
 import { PRODUCT_JOURNEY } from "@/lib/product-journey/constants";
+import { scheduleScrollTriggerRefresh } from "@/lib/gsap/load";
 import {
   buildJourneyCurve,
   cubicBezier,
   docToViewport,
-  getElementAnchor,
   getJourneyScaleTargets,
   measureHeroEmergeRange,
   measureHeroRestPose,
@@ -26,10 +27,11 @@ import {
   type Vec2,
 } from "@/lib/product-journey/math";
 import {
-  notifyProductJourney,
   patchProductJourney,
   productJourneyState,
 } from "@/lib/product-journey/store";
+
+const DOCK_MOVE_EPS = 0.0005;
 
 type JourneyProgressProxy = {
   t: number;
@@ -45,8 +47,21 @@ export function useProductJourneyController(enabled: boolean) {
   const idleTweensRef = useRef<Array<{ kill: () => void }>>([]);
   const anchorsRef = useRef<{ hero: Vec2; signature: Vec2 } | null>(null);
   const frozenHeroDocRef = useRef<DocPoint | null>(null);
+  const frozenSignatureDocRef = useRef<DocPoint | null>(null);
   const frozenStageWidthRef = useRef(340);
   const halfHeightRef = useRef(0.06);
+  const lastDockedRef = useRef<{ x: number; y: number } | null>(null);
+  const anchorElsRef = useRef<{
+    heroStage: HTMLElement | null;
+    heroCavity: HTMLElement | null;
+    signatureRest: HTMLElement | null;
+    signatureMarble: HTMLElement | null;
+  }>({
+    heroStage: null,
+    heroCavity: null,
+    signatureRest: null,
+    signatureMarble: null,
+  });
   const scrollTweenRef = useRef<{
     scrollTrigger?: { progress: number; refresh: () => void };
     kill: () => void;
@@ -107,15 +122,59 @@ export function useProductJourneyController(enabled: boolean) {
       rotateX: 0,
     });
 
-    const refreshAnchors = (options?: { freezeHero?: boolean }) => {
-      const pose = measureHeroRestPose();
-      const marble =
-        measureSignatureMarbleCenter() ??
-        getElementAnchor(
-          document.querySelector(
-            '[data-journey-anchor="signature-marble"]',
-          ) as HTMLElement | null,
-        ) ?? { x: 0.7, y: 0.58 };
+    const resolveAnchorElements = () => {
+      const cache = anchorElsRef.current;
+      const connected = (el: HTMLElement | null) =>
+        Boolean(el && el.isConnected);
+
+      if (!connected(cache.heroStage)) {
+        cache.heroStage = document.querySelector(
+          '[data-journey-anchor="hero"]',
+        ) as HTMLElement | null;
+      }
+      if (!connected(cache.heroCavity)) {
+        cache.heroCavity = document.querySelector(
+          '[data-journey-anchor="hero-cavity"]',
+        ) as HTMLElement | null;
+      }
+      if (!connected(cache.signatureRest)) {
+        cache.signatureRest = document.querySelector(
+          '[data-journey-anchor="signature-rest"]',
+        ) as HTMLElement | null;
+      }
+      if (!connected(cache.signatureMarble)) {
+        cache.signatureMarble = document.querySelector(
+          '[data-journey-anchor="signature-marble"]',
+        ) as HTMLElement | null;
+      }
+      return cache;
+    };
+
+    /**
+     * Prefer document-space frozen anchors + scroll offset (no layout reads).
+     * Live measure only when freezing / forced (resize, ST refresh, first land).
+     */
+    const refreshAnchors = (options?: {
+      freezeHero?: boolean;
+      freezeSignature?: boolean;
+      forceLive?: boolean;
+    }) => {
+      const els = resolveAnchorElements();
+      const needLiveHero =
+        Boolean(options?.forceLive) ||
+        Boolean(options?.freezeHero) ||
+        !frozenHeroDocRef.current;
+      const needLiveSignature =
+        Boolean(options?.forceLive) ||
+        Boolean(options?.freezeSignature) ||
+        !frozenSignatureDocRef.current;
+
+      const pose = needLiveHero
+        ? measureHeroRestPose({
+            heroStage: els.heroStage,
+            heroCavity: els.heroCavity,
+          })
+        : null;
 
       if (pose) {
         halfHeightRef.current = pose.bagHalfHeight;
@@ -123,6 +182,23 @@ export function useProductJourneyController(enabled: boolean) {
           frozenHeroDocRef.current = viewportToDoc(pose.bagCenter);
           frozenStageWidthRef.current = pose.stageWidthPx;
         }
+      }
+
+      let marble: Vec2 | null = null;
+      if (needLiveSignature) {
+        marble = measureSignatureMarbleCenter({
+          signatureRest: els.signatureRest,
+          signatureMarble: els.signatureMarble,
+        });
+        if (marble && (options?.freezeSignature || !frozenSignatureDocRef.current)) {
+          frozenSignatureDocRef.current = viewportToDoc(marble);
+        }
+      } else if (frozenSignatureDocRef.current) {
+        marble = docToViewport(frozenSignatureDocRef.current);
+      }
+
+      if (!marble) {
+        marble = { x: 0.7, y: 0.58 };
       }
 
       const baseWidth =
@@ -145,16 +221,15 @@ export function useProductJourneyController(enabled: boolean) {
     };
 
     const markContentReady = () => {
-      const alreadyReady = productJourneyState.contentReady;
+      if (productJourneyState.contentReady) return;
       patchProductJourney({ contentReady: true }, true);
-      if (alreadyReady) return;
       window.dispatchEvent(
         new CustomEvent("danovix:product-journey", {
           detail: { type: "landed" },
         }),
       );
       void import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
-        ScrollTrigger.refresh();
+        scheduleScrollTriggerRefresh(ScrollTrigger);
       });
     };
 
@@ -211,8 +286,8 @@ export function useProductJourneyController(enabled: boolean) {
       const scale = sampleJourneyScale(clamped);
 
       /*
-       * Final approach: blend onto the LIVE marble rest so scrub end and dock
-       * share one position — no pop, no down-then-up correction.
+       * Final approach: blend onto the frozen marble rest (doc-space) so scrub
+       * end and dock share one position — no pop, no layout reads per frame.
        */
       const settleBlend =
         clamped >= 0.82 ? Math.min(1, (clamped - 0.82) / 0.18) : 0;
@@ -243,6 +318,7 @@ export function useProductJourneyController(enabled: boolean) {
       const atRest = clamped <= 0.02;
       const parked = clamped >= 0.99 && landedRef.current;
 
+      /* Dirty-gated notify — skips listener fan-out when pose is unchanged */
       patchProductJourney(
         {
           progress: clamped,
@@ -266,11 +342,10 @@ export function useProductJourneyController(enabled: boolean) {
               : 0,
           shadowOpacity: 0.4 + (1 - Math.abs(clamped - 0.5) * 1.1) * 0.32,
           phase,
-          interactiveEnabled: parked,
+          interactiveEnabled: parked && !isCoarsePointerDevice(),
         },
-        false,
+        true,
       );
-      notifyProductJourney();
 
       if (clamped >= PRODUCT_JOURNEY.landing.contentProgress) {
         markContentReady();
@@ -308,11 +383,10 @@ export function useProductJourneyController(enabled: boolean) {
 
     /**
      * Lock the bag permanently above the Signature pedestal once it has
-     * landed. Tracks the LIVE marble anchor on every scroll frame so the bag
-     * stays glued above the pedestal (never sinks below it) as the section
-     * scrolls past. Scrolling back up hands control to the travel scrub.
+     * landed. Uses document-space frozen marble + scroll offset so the bag
+     * stays glued without layout reads every scroll tick.
      */
-    const dockBagToSignature = () => {
+    const dockBagToSignature = (options?: { force?: boolean }) => {
       if (!productJourneyState.revealed) return;
       if (productJourneyState.phase === "emerging") return;
 
@@ -321,6 +395,23 @@ export function useProductJourneyController(enabled: boolean) {
       if (!anchors) return;
 
       const endScale = sampleJourneyScale(1);
+      const nextX = anchors.signature.x;
+      const nextY = anchors.signature.y;
+      const last = lastDockedRef.current;
+
+      if (
+        !options?.force &&
+        last &&
+        Math.abs(last.x - nextX) < DOCK_MOVE_EPS &&
+        Math.abs(last.y - nextY) < DOCK_MOVE_EPS &&
+        productJourneyState.phase === "interactive" &&
+        landedRef.current
+      ) {
+        return;
+      }
+
+      lastDockedRef.current = { x: nextX, y: nextY };
+
       const alreadyLanded = landedRef.current;
       landedRef.current = true;
 
@@ -331,8 +422,8 @@ export function useProductJourneyController(enabled: boolean) {
       patchProductJourney(
         {
           progress: 1,
-          x: anchors.signature.x,
-          y: anchors.signature.y,
+          x: nextX,
+          y: nextY,
           scale: endScale,
           screenWidthPx:
             frozenStageWidthRef.current || productJourneyState.screenWidthPx,
@@ -345,13 +436,12 @@ export function useProductJourneyController(enabled: boolean) {
           particlesOpacity: 0,
           shadowOpacity: 0.72,
           phase: "interactive",
-          interactiveEnabled: true,
+          interactiveEnabled: !isCoarsePointerDevice(),
           contentReady: true,
           canvasVisible: true,
         },
-        false,
+        true,
       );
-      notifyProductJourney();
 
       if (!alreadyLanded) {
         markContentReady();
@@ -374,7 +464,7 @@ export function useProductJourneyController(enabled: boolean) {
         onUpdate: () => {
           if (productJourneyState.progress > 0.02) return;
           if (productJourneyState.phase === "emerging") return;
-          patchProductJourney({ floatY: idle.floatY }, false);
+          patchProductJourney({ floatY: idle.floatY }, true);
         },
       });
 
@@ -387,7 +477,7 @@ export function useProductJourneyController(enabled: boolean) {
         onUpdate: () => {
           if (productJourneyState.progress > 0.02) return;
           if (productJourneyState.phase === "emerging") return;
-          patchProductJourney({ idleRotateY: idle.rotateY }, false);
+          patchProductJourney({ idleRotateY: idle.rotateY }, true);
         },
       });
 
@@ -438,7 +528,7 @@ export function useProductJourneyController(enabled: boolean) {
           patchProductJourney(
             {
               phase: "interactive",
-              interactiveEnabled: true,
+              interactiveEnabled: !isCoarsePointerDevice(),
               compressY: 1,
               floatY: 0,
               particlesOpacity: 0,
@@ -469,7 +559,7 @@ export function useProductJourneyController(enabled: boolean) {
                 floatY: 0,
                 particlesOpacity: 0,
               },
-              false,
+              true,
             );
           },
         })
@@ -486,7 +576,7 @@ export function useProductJourneyController(enabled: boolean) {
                 shadowOpacity: land.shadowOpacity,
                 floatY: 0,
               },
-              false,
+              true,
             );
           },
         });
@@ -522,9 +612,8 @@ export function useProductJourneyController(enabled: boolean) {
           compressY: 1,
           shadowOpacity: 0.25 + rise * 0.47,
         },
-        false,
+        true,
       );
-      notifyProductJourney();
     };
 
     const run = async () => {
@@ -541,7 +630,10 @@ export function useProductJourneyController(enabled: boolean) {
 
       clearPortalClip();
 
-      const pose0 = refreshAnchors();
+      const pose0 = refreshAnchors({
+        freezeHero: true,
+        freezeSignature: true,
+      });
       const heroSection = document.querySelector(
         '[data-journey-section="hero"]',
       ) as HTMLElement | null;
@@ -640,9 +732,8 @@ export function useProductJourneyController(enabled: boolean) {
               onUpdate: () => {
                 patchProductJourney(
                   { floatY: emerge.settle, phase: "emerging" },
-                  false,
+                  true,
                 );
-                notifyProductJourney();
               },
             },
             riseEnd + HERO_PRODUCT_TIMING.emergeDuration,
@@ -656,14 +747,13 @@ export function useProductJourneyController(enabled: boolean) {
               onUpdate: () => {
                 patchProductJourney(
                   { floatY: emerge.settle, phase: "emerging" },
-                  false,
+                  true,
                 );
-                notifyProductJourney();
               },
               onComplete: () => {
                 if (cancelled) return;
                 const live = measureHeroRestPose() ?? pose;
-                refreshAnchors({ freezeHero: true });
+                refreshAnchors({ freezeHero: true, freezeSignature: true });
                 patchProductJourney({
                   revealed: true,
                   phase: "hero-idle",
@@ -707,7 +797,7 @@ export function useProductJourneyController(enabled: boolean) {
               applyProgress(proxy.t);
             },
             onRefresh: () => {
-              refreshAnchors();
+              refreshAnchors({ freezeHero: true, freezeSignature: true });
               applyProgress(proxy.t);
             },
           },
@@ -716,7 +806,7 @@ export function useProductJourneyController(enabled: boolean) {
 
         /*
          * Journey ends at the Signature Piece. From the landing point until
-         * the section leaves, DOCK the bag to the live pedestal so it stays
+         * the section leaves, DOCK the bag to the pedestal so it stays
          * locked above the marble — it never travels below this position.
          */
         ScrollTrigger.create({
@@ -724,17 +814,18 @@ export function useProductJourneyController(enabled: boolean) {
           start: PRODUCT_JOURNEY.scroll.end,
           endTrigger: signatureSection,
           end: PRODUCT_JOURNEY.scroll.hideAfterSignature,
-          onEnter: () => dockBagToSignature(),
-          onEnterBack: () => dockBagToSignature(),
+          onEnter: () => dockBagToSignature({ force: true }),
+          onEnterBack: () => dockBagToSignature({ force: true }),
           onUpdate: (self) => {
             if (self.progress < 1) dockBagToSignature();
           },
           onLeaveBack: () => {
             /* Scrolled back above the pedestal — travel scrub resumes */
+            lastDockedRef.current = null;
             applyProgress(progressRef.current.t);
           },
           onRefresh: (self) => {
-            if (self.isActive) dockBagToSignature();
+            if (self.isActive) dockBagToSignature({ force: true });
           },
         });
 
@@ -744,14 +835,13 @@ export function useProductJourneyController(enabled: boolean) {
           start: PRODUCT_JOURNEY.scroll.hideAfterSignature,
           onEnter: () => setCanvasVisible(false),
           onLeaveBack: () => setCanvasVisible(true),
-          onRefresh: () => {
-            const rect = signatureSection.getBoundingClientRect();
-            setCanvasVisible(rect.bottom > 0);
+          onRefresh: (self) => {
+            setCanvasVisible(self.scroll() < self.start);
           },
         });
       });
 
-      ScrollTrigger.refresh();
+      scheduleScrollTriggerRefresh(ScrollTrigger);
     };
 
     void run();
@@ -760,9 +850,14 @@ export function useProductJourneyController(enabled: boolean) {
     const onResize = () => {
       if (resizeRaf) cancelAnimationFrame(resizeRaf);
       resizeRaf = requestAnimationFrame(() => {
-        /* Re-freeze hero in document space after layout changes */
+        /* Re-freeze anchors in document space after layout changes */
         frozenHeroDocRef.current = null;
-        const pose = refreshAnchors({ freezeHero: true });
+        frozenSignatureDocRef.current = null;
+        lastDockedRef.current = null;
+        const pose = refreshAnchors({
+          freezeHero: true,
+          freezeSignature: true,
+        });
         if (
           pose &&
           productJourneyState.progress < 0.02 &&
@@ -776,12 +871,14 @@ export function useProductJourneyController(enabled: boolean) {
                 y: pose.bagCenter.y,
                 screenWidthPx: pose.stageWidthPx,
               },
-              false,
+              true,
             );
           }
         }
         applyProgress(progressRef.current.t);
-        scrollTriggerPlugin?.refresh();
+        if (scrollTriggerPlugin) {
+          scheduleScrollTriggerRefresh(scrollTriggerPlugin);
+        }
       });
     };
     window.addEventListener("resize", onResize, { passive: true });

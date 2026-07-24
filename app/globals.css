@@ -647,14 +647,14 @@ body {
   .hero-product-stage {
     --hero-product-x: 50%;
     --hero-product-y: 74%;
-    --hero-product-width: min(62vw, 220px);
+    --hero-product-width: min(46vw, 176px);
   }
 }
 
 @media (max-width: 380px) {
   .hero-product-stage {
     --hero-product-y: 72%;
-    --hero-product-width: min(70vw, 200px);
+    --hero-product-width: min(50vw, 158px);
   }
 }
 
@@ -930,7 +930,7 @@ body {
     left: 50%;
     top: auto;
     bottom: clamp(7%, 9vh, 12%);
-    width: min(52vw, 300px);
+    width: min(42vw, 240px);
     transform: translate3d(-50%, 0, 0);
   }
 
@@ -957,7 +957,7 @@ body {
 
   .signature-piece-grid {
     min-height: auto;
-    padding-bottom: min(44vh, 24rem);
+    padding-bottom: min(36vh, 18rem);
   }
 }
 
@@ -966,7 +966,7 @@ body {
     left: 50%;
     top: auto;
     bottom: clamp(5%, 7vh, 10%);
-    width: min(68vw, 260px);
+    width: min(46vw, 188px);
     transform: translate3d(-50%, 0, 0);
   }
 
@@ -1010,7 +1010,7 @@ body {
   .signature-piece-grid {
     min-height: auto;
     padding-top: clamp(4.25rem, 11vh, 6rem);
-    padding-bottom: min(42vh, 22rem);
+    padding-bottom: min(34vh, 17rem);
   }
 
   .signature-piece-editorial-col {
@@ -1035,12 +1035,12 @@ body {
 
 @media (max-width: 380px) {
   .signature-product-stage {
-    width: min(72vw, 220px);
+    width: min(50vw, 164px);
     bottom: clamp(4%, 6vh, 9%);
   }
 
   .signature-piece-grid {
-    padding-bottom: min(40vh, 18rem);
+    padding-bottom: min(32vh, 15rem);
   }
 }
 
@@ -2036,16 +2036,14 @@ body {
   }
 }
 
-/* Low-end / coarse pointers: drop permanent layer promotion on ambient blurs */
-@media (max-width: 768px) and (pointer: coarse) {
-  [data-signature="ambient"] *,
-  [data-featured="ambient"] *,
-  [data-craftsmanship="ambient"] *,
-  [data-voices="ambient"] *,
-  [data-community="ambient"] *,
-  [data-footer="ambient"] * {
-    will-change: auto;
-  }
+/* Drop permanent layer promotion on ambient blurs (keeps look; frees compositor memory) */
+[data-signature="ambient"] *,
+[data-featured="ambient"] *,
+[data-craftsmanship="ambient"] *,
+[data-voices="ambient"] *,
+[data-community="ambient"] *,
+[data-footer="ambient"] * {
+  will-change: auto;
 }
 
 

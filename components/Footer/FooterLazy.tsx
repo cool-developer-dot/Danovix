@@ -11,7 +11,7 @@ const Footer = dynamic(
 
 export function FooterLazy() {
   return (
-    <DeferredSection id="journal" minHeight="80vh" rootMargin="720px 0px">
+    <DeferredSection id="journal" minHeight="80vh" rootMargin="240px 0px">
       <Footer />
     </DeferredSection>
   );

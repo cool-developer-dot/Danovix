@@ -81,6 +81,10 @@ type JourneyListener = (state: ProductJourneyState) => void;
 
 const listeners = new Set<JourneyListener>();
 
+/** Skip notify when pose hasn't moved enough to matter on screen. */
+const POSE_EPS = 1e-5;
+const OPACITY_EPS = 2e-3;
+
 export function subscribeProductJourney(listener: JourneyListener) {
   listeners.add(listener);
   return () => listeners.delete(listener);
@@ -92,10 +96,42 @@ export function notifyProductJourney() {
   }
 }
 
+function isPoseDirty(
+  before: ProductJourneyState,
+  patch: Partial<ProductJourneyState>,
+): boolean {
+  for (const key of Object.keys(patch) as Array<keyof ProductJourneyState>) {
+    const next = patch[key];
+    if (next === undefined) continue;
+    const prev = before[key];
+    if (typeof next === "number" && typeof prev === "number") {
+      const eps =
+        key === "shadowOpacity" || key === "particlesOpacity"
+          ? OPACITY_EPS
+          : POSE_EPS;
+      if (Math.abs(next - prev) > eps) return true;
+      continue;
+    }
+    if (next !== prev) return true;
+  }
+  return false;
+}
+
 export function patchProductJourney(
   patch: Partial<ProductJourneyState>,
   notify = true,
 ) {
+  if (!notify) {
+    Object.assign(productJourneyState, patch);
+    return;
+  }
+
+  /* Snapshot only the keys we might dirty-check — avoid cloning the whole state. */
+  if (!isPoseDirty(productJourneyState, patch)) {
+    Object.assign(productJourneyState, patch);
+    return;
+  }
+
   Object.assign(productJourneyState, patch);
-  if (notify) notifyProductJourney();
+  notifyProductJourney();
 }

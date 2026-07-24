@@ -60,6 +60,13 @@ function JourneyLights() {
 
 function JourneyShadow({ resolution }: { resolution: number }) {
   const ref = useRef<Group>(null);
+  const viewportDimsRef = useRef<{
+    width: number;
+    height: number;
+    z: number;
+    halfH: number;
+    halfW: number;
+  } | null>(null);
 
   useFrame(({ camera, size }) => {
     const group = ref.current;
@@ -68,13 +75,31 @@ function JourneyShadow({ resolution }: { resolution: number }) {
     group.visible =
       state.canvasVisible && state.revealed && state.shadowOpacity > 0.05;
 
-    const dist = camera.position.z;
-    const vFov = 35 * (Math.PI / 180);
-    const halfH = Math.tan(vFov / 2) * dist;
-    const halfW = halfH * (size.width / Math.max(1, size.height));
+    if (!group.visible) return;
 
-    group.position.x = (state.x - 0.5) * 2 * halfW;
-    group.position.y = (0.5 - state.y) * 2 * halfH - 0.52 * state.scale;
+    let dims = viewportDimsRef.current;
+    if (
+      !dims ||
+      dims.width !== size.width ||
+      dims.height !== size.height ||
+      dims.z !== camera.position.z
+    ) {
+      const dist = camera.position.z;
+      const vFov = 35 * (Math.PI / 180);
+      const halfH = Math.tan(vFov / 2) * dist;
+      const halfW = halfH * (size.width / Math.max(1, size.height));
+      dims = {
+        width: size.width,
+        height: size.height,
+        z: dist,
+        halfH,
+        halfW,
+      };
+      viewportDimsRef.current = dims;
+    }
+
+    group.position.x = (state.x - 0.5) * 2 * dims.halfW;
+    group.position.y = (0.5 - state.y) * 2 * dims.halfH - 0.52 * state.scale;
     group.scale.setScalar(0.85 + state.scale * 0.2);
   });
 
@@ -93,8 +118,8 @@ function JourneyShadow({ resolution }: { resolution: number }) {
 }
 
 /**
- * Keep the WebGL loop alive only while the journey canvas should paint.
- * GSAP mutates the store outside React — this gate reads store + page visibility.
+ * Keep the WebGL loop in demand mode — invalidate only when the journey store
+ * changes. Identical visuals; far less GPU work while the bag is static.
  */
 function JourneyFrameGate() {
   const setFrameloop = useThree((s) => s.setFrameloop);
@@ -102,11 +127,15 @@ function JourneyFrameGate() {
 
   useEffect(() => {
     const sync = () => {
-      const shouldRun =
+      const shouldPaint =
         productJourneyState.canvasVisible &&
         document.visibilityState === "visible";
-      setFrameloop(shouldRun ? "always" : "never");
-      if (shouldRun) invalidate();
+      if (!shouldPaint) {
+        setFrameloop("never");
+        return;
+      }
+      setFrameloop("demand");
+      invalidate();
     };
 
     sync();
@@ -196,7 +225,7 @@ export function ProductJourneyCanvas({ active }: ProductJourneyCanvasProps) {
       <div
         ref={hitRef}
         data-product-journey="interaction-hit"
-        className="pointer-events-none absolute left-0 top-0 z-[31] touch-none will-change-transform"
+        className="pointer-events-none absolute left-0 top-0 z-[31] touch-none"
         style={{ width: 0, height: 0 }}
         aria-hidden="true"
       />

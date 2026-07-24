@@ -12,7 +12,7 @@ const Footer = dynamic(
 
 export function FooterDeferred() {
   return (
-    <DeferredSection minHeight="70vh" rootMargin="640px 0px">
+    <DeferredSection minHeight="70vh" rootMargin="240px 0px">
       <Footer />
     </DeferredSection>
   );

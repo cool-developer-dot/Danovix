@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 
+import { scheduleScrollTriggerRefresh } from "@/lib/gsap/load";
 import { PRODUCT_JOURNEY } from "@/lib/product-journey/constants";
 import {
   productJourneyState,
@@ -156,7 +157,7 @@ export function useSignatureAnimations(
       if (cancelled) return;
 
       /* Ensure ST measurements are current after the bag lands */
-      ScrollTrigger.refresh();
+      scheduleScrollTriggerRefresh(ScrollTrigger);
 
       const { duration, delay, ease, y, clipY, featureX } =
         SIGNATURE_ANIMATION.editorial;
@@ -367,7 +368,7 @@ export function useSignatureAnimations(
         });
       }, root);
 
-      ScrollTrigger.refresh();
+      scheduleScrollTriggerRefresh(ScrollTrigger);
 
       /* If the bag already landed before this section mounted, reveal now */
       tryRevealEditorial();
@@ -375,10 +376,15 @@ export function useSignatureAnimations(
 
     void run();
 
+    let wasContentReady = productJourneyState.contentReady;
     const unsubscribe = subscribeProductJourney((state) => {
-      if (state.contentReady) {
+      if (state.contentReady && !wasContentReady) {
+        wasContentReady = true;
         void playEditorial();
         return;
+      }
+      if (!state.contentReady && wasContentReady) {
+        wasContentReady = false;
       }
       if (editorialPlayedRef.current && state.progress < 0.9) {
         resetEditorial();

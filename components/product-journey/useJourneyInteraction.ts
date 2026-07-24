@@ -2,6 +2,7 @@
 
 import { useEffect, type RefObject } from "react";
 
+import { isCoarsePointerDevice } from "@/lib/performance/device";
 import { PRODUCT_JOURNEY } from "@/lib/product-journey/constants";
 import {
   patchProductJourney,
@@ -16,13 +17,22 @@ const HIT_ASPECT = 1.2;
 /**
  * Position a compact hit target over the bag so the left editorial column
  * stays selectable — the full-screen canvas never receives pointer events.
+ * Disabled entirely on coarse/touch devices so vertical scroll is never blocked.
  */
 function syncHitTarget(hit: HTMLElement) {
   const state = productJourneyState;
-  if (!state.interactiveEnabled || !state.canvasVisible) {
+  const allowInteraction =
+    state.interactiveEnabled &&
+    state.canvasVisible &&
+    !isCoarsePointerDevice();
+
+  if (!allowInteraction) {
     hit.style.pointerEvents = "none";
     hit.style.cursor = "";
     hit.style.touchAction = "";
+    hit.style.willChange = "auto";
+    hit.style.width = "0px";
+    hit.style.height = "0px";
     hit.setAttribute("aria-hidden", "true");
     return;
   }
@@ -37,6 +47,7 @@ function syncHitTarget(hit: HTMLElement) {
   hit.style.width = `${width}px`;
   hit.style.height = `${height}px`;
   hit.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+  hit.style.willChange = "transform";
   hit.style.pointerEvents = "auto";
   hit.style.cursor = "grab";
   hit.style.touchAction = "none";
@@ -44,8 +55,8 @@ function syncHitTarget(hit: HTMLElement) {
 }
 
 /**
- * Momentum drag (desktop + touch) — only after the bag has landed,
- * and only within the bag-surround hit target (never over editorial copy).
+ * Momentum drag (desktop only) — after the bag has landed,
+ * only within the bag-surround hit target. Mobile never captures pointers.
  */
 export function useJourneyInteraction(
   hitRef: RefObject<HTMLElement | null>,
@@ -56,6 +67,17 @@ export function useJourneyInteraction(
 
     const hit = hitRef.current;
     if (!hit) return;
+
+    // Touch / coarse: never attach drag handlers — keep scroll native.
+    if (isCoarsePointerDevice()) {
+      syncHitTarget(hit);
+      return () => {
+        hit.style.pointerEvents = "none";
+        hit.style.cursor = "";
+        hit.style.touchAction = "";
+        hit.style.willChange = "auto";
+      };
+    }
 
     let dragging = false;
     let lastX = 0;
@@ -110,7 +132,7 @@ export function useJourneyInteraction(
               ),
             ),
           },
-          false,
+          true,
         );
       }
 
@@ -130,9 +152,11 @@ export function useJourneyInteraction(
     };
 
     const onPointerDown = (event: PointerEvent) => {
+      if (isCoarsePointerDevice()) return;
       if (!productJourneyState.interactiveEnabled) return;
-      // Ignore if somehow outside the hit target (defensive).
       if (event.currentTarget !== hit) return;
+      // Touch pointers must never steal scroll.
+      if (event.pointerType === "touch") return;
 
       dragging = true;
       lastX = event.clientX;
@@ -166,7 +190,7 @@ export function useJourneyInteraction(
             ),
           ),
         },
-        false,
+        true,
       );
       ensureLoop();
     };
@@ -186,7 +210,15 @@ export function useJourneyInteraction(
     const onResize = () => scheduleHitSync();
 
     syncHitTarget(hit);
-    const unsub = subscribeProductJourney(scheduleHitSync);
+    let wasInteractive = productJourneyState.interactiveEnabled;
+    const unsub = subscribeProductJourney(() => {
+      const now =
+        productJourneyState.interactiveEnabled &&
+        productJourneyState.canvasVisible;
+      if (!now && !wasInteractive) return;
+      wasInteractive = now;
+      scheduleHitSync();
+    });
     window.addEventListener("resize", onResize, { passive: true });
 
     hit.addEventListener("pointerdown", onPointerDown);
@@ -205,6 +237,7 @@ export function useJourneyInteraction(
       hit.removeEventListener("pointercancel", endDrag);
       hit.style.pointerEvents = "none";
       hit.style.cursor = "";
+      hit.style.willChange = "auto";
     };
   }, [hitRef, active]);
 }

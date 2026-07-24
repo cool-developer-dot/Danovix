@@ -464,32 +464,66 @@ export function useCommunityAnimations(
           });
         }
 
-        /* ── Desktop parallax ── */
+        /* ── Desktop parallax (single scrub + quickSetters — no N ScrollTriggers) ── */
         if (isDesktop) {
           const mediaNodes = root.querySelectorAll<HTMLElement>(
             '[data-community="media"]',
           );
 
-          for (const media of mediaNodes) {
-            const card = media.closest<HTMLElement>('[data-community="card"]');
-            const amount = Number(card?.dataset.parallax ?? 10);
+          type ParallaxItem = {
+            setY: (value: number) => void;
+            from: number;
+            span: number;
+            start: number;
+            range: number;
+          };
 
-            gsap.fromTo(
-              media,
-              { y: -amount * COMMUNITY_PARALLAX.intensity },
-              {
-                y: amount * COMMUNITY_PARALLAX.intensity,
-                ease: "none",
-                force3D: true,
-                scrollTrigger: {
-                  trigger: card ?? media,
-                  start: "top bottom",
-                  end: "bottom top",
-                  scrub: COMMUNITY_PARALLAX.scrub,
-                },
-              },
-            );
-          }
+          const items: ParallaxItem[] = [];
+
+          const rebuildParallax = () => {
+            items.length = 0;
+            const scrollY = window.scrollY;
+            const vh = window.innerHeight;
+
+            for (const media of mediaNodes) {
+              const card =
+                media.closest<HTMLElement>('[data-community="card"]') ?? media;
+              const amount = Number(card.dataset.parallax ?? 10);
+              const from = -amount * COMMUNITY_PARALLAX.intensity;
+              const to = amount * COMMUNITY_PARALLAX.intensity;
+              const rect = card.getBoundingClientRect();
+              const start = rect.top + scrollY - vh;
+              const end = rect.bottom + scrollY;
+              items.push({
+                setY: gsap.quickSetter(media, "y", "px") as (value: number) => void,
+                from,
+                span: to - from,
+                start,
+                range: Math.max(1, end - start),
+              });
+            }
+          };
+
+          ScrollTrigger.create({
+            trigger: root,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: COMMUNITY_PARALLAX.scrub,
+            invalidateOnRefresh: true,
+            onRefresh: rebuildParallax,
+            onUpdate: () => {
+              const y = window.scrollY;
+              for (const item of items) {
+                const p = Math.min(
+                  1,
+                  Math.max(0, (y - item.start) / item.range),
+                );
+                item.setY(item.from + item.span * p);
+              }
+            },
+          });
+
+          rebuildParallax();
         }
 
         /* ── Cursor magnetic drift (desktop + hover) ── */

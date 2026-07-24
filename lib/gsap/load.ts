@@ -4,6 +4,7 @@
  */
 
 let pluginsRegistered = false;
+let refreshRaf = 0;
 
 export async function loadGsap() {
   const { default: gsap } = await import("gsap");
@@ -22,4 +23,18 @@ export async function loadGsapWithScrollTrigger() {
   }
 
   return { gsap, ScrollTrigger };
+}
+
+/**
+ * Coalesce ScrollTrigger.refresh() to once per animation frame.
+ * Multiple sections often refresh on the same mount/land tick.
+ */
+export function scheduleScrollTriggerRefresh(
+  ScrollTrigger: { refresh: () => void },
+) {
+  if (refreshRaf) return;
+  refreshRaf = requestAnimationFrame(() => {
+    refreshRaf = 0;
+    ScrollTrigger.refresh();
+  });
 }

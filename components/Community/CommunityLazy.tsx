@@ -12,7 +12,7 @@ const Community = dynamic(
 
 export function CommunityLazy() {
   return (
-    <DeferredSection id="community" minHeight="120vh" rootMargin="640px 0px">
+    <DeferredSection id="community" minHeight="120vh" rootMargin="280px 0px">
       <Community />
     </DeferredSection>
   );

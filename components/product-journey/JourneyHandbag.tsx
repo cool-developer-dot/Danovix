@@ -23,6 +23,13 @@ const DEG = Math.PI / 180;
  */
 export function JourneyHandbag() {
   const groupRef = useRef<Group>(null);
+  const viewportDimsRef = useRef<{
+    width: number;
+    height: number;
+    z: number;
+    halfH: number;
+    halfW: number;
+  } | null>(null);
   const texture = useTexture(PRODUCT_JOURNEY_ASSET);
 
   useEffect(() => {
@@ -70,10 +77,28 @@ export function JourneyHandbag() {
 
     group.visible = true;
 
-    const dist = camera.position.z;
-    const vFov = (camera as typeof camera & { fov: number }).fov ?? 35;
-    const halfH = Math.tan((vFov * DEG) / 2) * dist;
-    const halfW = halfH * (size.width / Math.max(1, size.height));
+    let dims = viewportDimsRef.current;
+    if (
+      !dims ||
+      dims.width !== size.width ||
+      dims.height !== size.height ||
+      dims.z !== camera.position.z
+    ) {
+      const dist = camera.position.z;
+      const vFov = (camera as typeof camera & { fov: number }).fov ?? 35;
+      const halfH = Math.tan((vFov * DEG) / 2) * dist;
+      const halfW = halfH * (size.width / Math.max(1, size.height));
+      dims = {
+        width: size.width,
+        height: size.height,
+        z: dist,
+        halfH,
+        halfW,
+      };
+      viewportDimsRef.current = dims;
+    }
+
+    const { halfH, halfW } = dims;
 
     const worldX = (state.x - 0.5) * 2 * halfW;
     const worldY = (0.5 - state.y) * 2 * halfH;

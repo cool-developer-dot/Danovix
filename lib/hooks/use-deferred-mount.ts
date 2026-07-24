@@ -22,7 +22,7 @@ type UseDeferredMountOptions = {
  * First paint is always unmounted (SSR + hydrate) to avoid hydration mismatches.
  */
 export function useDeferredMount({
-  rootMargin = "480px 0px",
+  rootMargin = "320px 0px",
   threshold = 0,
   eager = false,
   hashId,

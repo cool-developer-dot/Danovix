@@ -14,7 +14,7 @@ const FeaturedCollection = dynamic(
 
 export function FeaturedCollectionLazy() {
   return (
-    <DeferredSection id="about" minHeight="100vh" rootMargin="560px 0px">
+    <DeferredSection id="about" minHeight="100vh" rootMargin="360px 0px">
       <FeaturedCollection />
     </DeferredSection>
   );

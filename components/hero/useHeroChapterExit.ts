@@ -3,6 +3,8 @@
 import type { RefObject } from "react";
 import { useEffect } from "react";
 
+import { scheduleScrollTriggerRefresh } from "@/lib/gsap/load";
+
 const CONTENT_SELECTORS = [
   '[data-hero-animate="description"]',
   '[data-hero-animate="buttons"]',
@@ -55,7 +57,7 @@ export function setupHeroChapterExit(scope: HTMLElement): () => void {
       });
     }, scope);
 
-    ScrollTrigger.refresh();
+    scheduleScrollTriggerRefresh(ScrollTrigger);
   };
 
   void run();
