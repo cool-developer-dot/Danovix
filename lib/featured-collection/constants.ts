@@ -44,7 +44,7 @@ export const FEATURED_PRODUCTS: readonly FeaturedProduct[] = [
     description:
       "Sculpted from a single panel of Italian full-grain leather, Luna carries your world with quiet, effortless authority.",
     price: "Starting at $289",
-    href: "#collection",
+    href: "/product/luna-tote",
     imageAlt: "The Luna Tote in powder blue leather, presented in signature packaging",
     showcaseFrames: buildEditorialFrame("luna-tote", 1024, 768),
   },
@@ -55,7 +55,7 @@ export const FEATURED_PRODUCTS: readonly FeaturedProduct[] = [
     description:
       "Hand-stitched around a whisper-soft silk lining, Celeste is the final, perfect detail of a considered evening.",
     price: "Starting at $349",
-    href: "#collection",
+    href: "/product/celeste-clutch",
     imageAlt: "The Celeste Clutch in quilted black leather with pearl and gold detailing",
     showcaseFrames: buildEditorialFrame("celeste-clutch", 768, 1024),
   },
@@ -66,7 +66,7 @@ export const FEATURED_PRODUCTS: readonly FeaturedProduct[] = [
     description:
       "Compact confidence finished with sculpted gold hardware — a modern heirloom made to be noticed.",
     price: "Starting at $249",
-    href: "#collection",
+    href: "/product/aurora-mini",
     imageAlt: "The Aurora Mini in cream quilted leather with gold hardware",
     showcaseFrames: buildEditorialFrame("aurora-mini", 1024, 1024),
   },

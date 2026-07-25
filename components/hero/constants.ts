@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { Infinity, Layers, ShieldCheck } from "lucide-react";
 
 export const NAV_LINKS = [
-  { label: "Collection", href: "/#collection" },
+  { label: "Collection", href: "/collection" },
   { label: "About", href: "/#about" },
   { label: "Craftsmanship", href: "/#craftsmanship" },
   { label: "Journal", href: "/#journal" },

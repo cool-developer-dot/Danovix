@@ -140,7 +140,7 @@ export const WISHLIST_EMPTY = {
   description:
     "Discover timeless pieces you'll want to revisit again and again.",
   cta: "Explore Collection",
-  ctaHref: "/#collection",
+  ctaHref: "/collection",
 } as const;
 
 /** Seeded private collection — editorial demo for the flagship experience. */
@@ -431,7 +431,7 @@ export const CURATED_RECOMMENDATIONS: readonly CuratedItem[] = [
     priceLabel: "Starting at $510",
     imageSrc: "/community/04-taupe-lock.webp",
     imageAlt: "Warm taupe lock day bag",
-    href: "/#collection",
+    href: "/collection",
   },
   {
     id: "curated-bordeaux",
@@ -440,7 +440,7 @@ export const CURATED_RECOMMENDATIONS: readonly CuratedItem[] = [
     priceLabel: "Starting at $580",
     imageSrc: "/community/05-bordeaux-kelly.webp",
     imageAlt: "Deep bordeaux frame handbag",
-    href: "/#collection",
+    href: "/collection",
   },
   {
     id: "curated-olive",
@@ -449,7 +449,7 @@ export const CURATED_RECOMMENDATIONS: readonly CuratedItem[] = [
     priceLabel: "Starting at $310",
     imageSrc: "/community/06-olive-unboxing.webp",
     imageAlt: "Olive voyage crossbody",
-    href: "/#collection",
+    href: "/collection",
   },
 ] as const;
 

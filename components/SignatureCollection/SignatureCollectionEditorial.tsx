@@ -55,7 +55,7 @@ export function SignatureCollectionEditorial() {
         ))}
       </div>
 
-      <a href="#collection" data-signature="cta" className={signatureCta}>
+      <a href="/collection" data-signature="cta" className={signatureCta}>
         {SIGNATURE_CTA}
       </a>
 

@@ -71,7 +71,7 @@ export function CompleteYourCollection() {
               <h3 className={completeName}>{product.name}</h3>
               <p className={completeMeta}>{product.collection}</p>
               <p className={completePrice}>{product.priceLabel}</p>
-              <Link href="/#collection" className={completeCta}>
+              <Link href="/collection" className={completeCta}>
                 {COMPLETE_YOUR_COLLECTION.cta}
                 <span aria-hidden="true">→</span>
               </Link>

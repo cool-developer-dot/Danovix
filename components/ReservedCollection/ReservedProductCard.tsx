@@ -93,7 +93,7 @@ export function ReservedProductCard({
             {PRODUCT_ACTIONS.privateCollection}
           </button>
           <Link
-            href="/#collection"
+            href="/collection"
             className={productActionLink}
           >
             {PRODUCT_ACTIONS.viewDetails}

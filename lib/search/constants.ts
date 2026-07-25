@@ -255,7 +255,7 @@ export const EDITORIAL_COLLECTIONS: readonly EditorialCollection[] = [
     subtitle: "Structured leather for the day ahead",
     imageSrc: "/community/04-taupe-lock.webp",
     imageAlt: "Structured taupe lock handbag for the office",
-    href: "/#collection",
+    href: "/collection",
     query: "office",
   },
   {
@@ -264,7 +264,7 @@ export const EDITORIAL_COLLECTIONS: readonly EditorialCollection[] = [
     subtitle: "Relaxed silhouettes, refined ease",
     imageSrc: "/community/09-pearl-bucket.webp",
     imageAlt: "Pearl ivory bucket bag for weekend luxury",
-    href: "/#collection",
+    href: "/collection",
     query: "weekend",
   },
   {
@@ -273,7 +273,7 @@ export const EDITORIAL_COLLECTIONS: readonly EditorialCollection[] = [
     subtitle: "Companions for every journey",
     imageSrc: "/community/08-atelier-mahogany.webp",
     imageAlt: "Mahogany atelier travel bag",
-    href: "/#collection",
+    href: "/collection?category=travel",
     query: "travel",
   },
   {
@@ -282,7 +282,7 @@ export const EDITORIAL_COLLECTIONS: readonly EditorialCollection[] = [
     subtitle: "Quiet drama for night",
     imageSrc: "/featured/celeste-clutch/hero.webp",
     imageAlt: "Celeste clutch for evening",
-    href: "/#collection",
+    href: "/collection?category=evening",
     query: "evening",
   },
   {
@@ -291,7 +291,7 @@ export const EDITORIAL_COLLECTIONS: readonly EditorialCollection[] = [
     subtitle: "Fewer pieces. Stronger presence.",
     imageSrc: "/handbag.webp",
     imageAlt: "Matte noir signature DANOVIX handbag",
-    href: "/#collection",
+    href: "/collection",
     query: "minimal",
   },
   {
@@ -300,7 +300,7 @@ export const EDITORIAL_COLLECTIONS: readonly EditorialCollection[] = [
     subtitle: "Pieces chosen with intention",
     imageSrc: "/community/03-taupe-ribbons.webp",
     imageAlt: "Soft taupe ribbon mini bag as a gift",
-    href: "/#collection",
+    href: "/collection",
     query: "gift",
   },
 ] as const;
@@ -332,7 +332,7 @@ export const SEARCH_EMPTY = {
   description:
     "Explore our curated collections or allow our AI Concierge to help you discover the perfect alternative.",
   cta: "Discover Collection",
-  ctaHref: "/#collection",
+  ctaHref: "/collection",
 } as const;
 
 export const CONTINUE_EXPLORING = {

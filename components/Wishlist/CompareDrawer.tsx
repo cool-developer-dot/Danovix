@@ -165,7 +165,7 @@ export function CompareDrawer({ open, items, onClose }: CompareDrawerProps) {
             <p className="mt-4 max-w-[720px] text-[15px] leading-[1.85] text-[rgb(248_247_244/0.72)]">
               {recommendation}
             </p>
-            <Link href="/#collection" className={drawerAiCta}>
+            <Link href="/collection" className={drawerAiCta}>
               {WISHLIST_COMPARE.aiCta}
               <span aria-hidden="true">→</span>
             </Link>

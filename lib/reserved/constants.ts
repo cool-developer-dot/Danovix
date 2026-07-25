@@ -53,7 +53,7 @@ export const RESERVED_EMPTY = {
   description:
     "Discover timeless handbags crafted for modern women.",
   cta: "Explore Collection",
-  ctaHref: "/#collection",
+  ctaHref: "/collection",
 } as const;
 
 export const RESERVED_TIMELINE: readonly TimelineStep[] = [
@@ -236,7 +236,7 @@ export const COMPLETE_COLLECTION_ITEMS: readonly CompleteCollectionItem[] = [
     priceLabel: "$295",
     imageSrc: "/community/03-taupe-ribbons.webp",
     imageAlt: "Atelier heel in warm taupe",
-    href: "/#collection",
+    href: "/collection",
   },
   {
     id: "folio-wallet",
@@ -245,7 +245,7 @@ export const COMPLETE_COLLECTION_ITEMS: readonly CompleteCollectionItem[] = [
     priceLabel: "$165",
     imageSrc: "/community/04-taupe-lock.webp",
     imageAlt: "Folio wallet with gold lock detail",
-    href: "/#collection",
+    href: "/collection",
   },
   {
     id: "horizon-watch",
@@ -254,7 +254,7 @@ export const COMPLETE_COLLECTION_ITEMS: readonly CompleteCollectionItem[] = [
     priceLabel: "$480",
     imageSrc: "/community/08-atelier-mahogany.webp",
     imageAlt: "Horizon watch on mahogany staging",
-    href: "/#collection",
+    href: "/collection",
   },
   {
     id: "silk-scarf",
@@ -263,7 +263,7 @@ export const COMPLETE_COLLECTION_ITEMS: readonly CompleteCollectionItem[] = [
     priceLabel: "$120",
     imageSrc: "/community/09-pearl-bucket.webp",
     imageAlt: "Silk scarf draped with pearl bucket bag",
-    href: "/#collection",
+    href: "/collection",
   },
 ] as const;
 

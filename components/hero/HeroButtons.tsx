@@ -19,7 +19,7 @@ export function HeroButtons({ className }: HeroButtonsProps) {
       )}
     >
       <a
-        href="#collection"
+        href="/collection"
         className="group relative inline-flex h-12 w-full items-center justify-center gap-2.5 overflow-hidden rounded-[14px] bg-danovix-primary px-8 text-[clamp(9px,2.5vw,10px)] font-medium uppercase tracking-[0.2em] text-danovix-background shadow-[0_12px_32px_rgb(17_17_17/0.18)] transition-[background-color,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:bg-danovix-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danovix-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:w-auto sm:tracking-[0.22em]"
       >
         {HERO_PRIMARY_CTA}
