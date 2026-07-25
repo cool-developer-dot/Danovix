@@ -7,6 +7,7 @@ import {
   DoubleSide,
   Group,
   MeshStandardMaterial,
+  PlaneGeometry,
   SRGBColorSpace,
 } from "three";
 
@@ -15,10 +16,13 @@ import { PRODUCT_JOURNEY_ASSET } from "@/lib/product-journey/constants";
 import { productJourneyState } from "@/lib/product-journey/store";
 
 const DEG = Math.PI / 180;
+const POS_EPS = 1e-5;
+const ROT_EPS = 1e-5;
+const SCALE_EPS = 1e-5;
 
 /**
  * ONE handbag for the entire page journey.
- * Shared texture + material — never duplicated.
+ * Shared texture + material + geometry — never duplicated.
  * Transform driven by the mutable journey store (no React re-renders).
  */
 export function JourneyHandbag() {
@@ -31,6 +35,7 @@ export function JourneyHandbag() {
     halfW: number;
   } | null>(null);
   const texture = useTexture(PRODUCT_JOURNEY_ASSET);
+  const geometry = useMemo(() => new PlaneGeometry(1, 1), []);
 
   useEffect(() => {
     // Three.js textures are intentionally mutable after load.
@@ -47,6 +52,8 @@ export function JourneyHandbag() {
       texture.dispose();
     };
   }, [texture]);
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
   const material = useMemo(
     () =>
@@ -65,7 +72,7 @@ export function JourneyHandbag() {
 
   useEffect(() => () => material.dispose(), [material]);
 
-  useFrame(({ camera, size }, delta) => {
+  useFrame(({ camera, size, invalidate }, delta) => {
     const group = groupRef.current;
     if (!group) return;
 
@@ -103,15 +110,10 @@ export function JourneyHandbag() {
     const worldX = (state.x - 0.5) * 2 * halfW;
     const worldY = (0.5 - state.y) * 2 * halfH;
 
-    /* Exact pedestal-matched width — no arbitrary 28vw guess */
     const screenW = Math.max(48, state.screenWidthPx) * state.scale;
     const planeWorldW = (screenW / size.width) * halfW * 2;
     const planeH = planeWorldW / HERO_PRODUCT_ASPECT;
 
-    /*
-     * Scrubbed travel + docked interactive must track 1:1 — no lerp lag
-     * (lerp while docking was the bag sinking below the marble then catching up).
-     */
     const snap =
       state.phase === "emerging" ||
       state.phase === "concealed" ||
@@ -121,12 +123,32 @@ export function JourneyHandbag() {
         ? 1
         : Math.min(1, delta * 16);
 
-    group.position.x += (worldX - group.position.x) * snap;
-    group.position.y +=
-      (worldY + state.floatY * 0.004 - group.position.y) * snap;
-    group.position.z += (state.depth - group.position.z) * snap;
+    const targetX = worldX;
+    const targetY = worldY + state.floatY * 0.004;
+    const targetZ = state.depth;
 
-    group.scale.set(planeWorldW, planeH * state.compressY, 1);
+    const nextX = group.position.x + (targetX - group.position.x) * snap;
+    const nextY = group.position.y + (targetY - group.position.y) * snap;
+    const nextZ = group.position.z + (targetZ - group.position.z) * snap;
+
+    if (
+      Math.abs(nextX - group.position.x) > POS_EPS ||
+      Math.abs(nextY - group.position.y) > POS_EPS ||
+      Math.abs(nextZ - group.position.z) > POS_EPS
+    ) {
+      group.position.x = nextX;
+      group.position.y = nextY;
+      group.position.z = nextZ;
+    }
+
+    const sx = planeWorldW;
+    const sy = planeH * state.compressY;
+    if (
+      Math.abs(group.scale.x - sx) > SCALE_EPS ||
+      Math.abs(group.scale.y - sy) > SCALE_EPS
+    ) {
+      group.scale.set(sx, sy, 1);
+    }
 
     const yaw =
       (state.rotateY + state.idleRotateY) * DEG +
@@ -141,18 +163,39 @@ export function JourneyHandbag() {
       state.phase === "landing"
         ? 1
         : Math.min(1, delta * 10);
-    group.rotation.y += (yaw - group.rotation.y) * rotEase;
-    group.rotation.x += (pitch - group.rotation.x) * rotEase;
+
+    const nextYaw = group.rotation.y + (yaw - group.rotation.y) * rotEase;
+    const nextPitch = group.rotation.x + (pitch - group.rotation.x) * rotEase;
+    if (
+      Math.abs(nextYaw - group.rotation.y) > ROT_EPS ||
+      Math.abs(nextPitch - group.rotation.x) > ROT_EPS
+    ) {
+      group.rotation.y = nextYaw;
+      group.rotation.x = nextPitch;
+    }
+
+    /* Keep demand-loop alive while easing toward idle targets */
+    if (snap < 1 || rotEase < 1) {
+      if (
+        Math.abs(targetX - group.position.x) > 1e-4 ||
+        Math.abs(targetY - group.position.y) > 1e-4 ||
+        Math.abs(yaw - group.rotation.y) > 1e-4 ||
+        Math.abs(pitch - group.rotation.x) > 1e-4
+      ) {
+        invalidate();
+      }
+    }
   });
 
   return (
     <group ref={groupRef}>
-      <mesh material={material} position={[0, 0, 0.01]}>
-        <planeGeometry args={[1, 1]} />
-      </mesh>
-      <mesh position={[0, 0, -0.012]} scale={[-1, 1, 1]} material={material}>
-        <planeGeometry args={[1, 1]} />
-      </mesh>
+      <mesh material={material} geometry={geometry} position={[0, 0, 0.01]} />
+      <mesh
+        position={[0, 0, -0.012]}
+        scale={[-1, 1, 1]}
+        material={material}
+        geometry={geometry}
+      />
     </group>
   );
 }

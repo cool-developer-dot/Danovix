@@ -36,9 +36,10 @@ export function CraftsmanshipGallery() {
                 alt={frame.alt}
                 width={frame.width}
                 height={frame.height}
-                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 55vw, 42vw"
+                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 55vw, 560px"
                 quality={85}
                 loading={index === 0 ? "eager" : "lazy"}
+                decoding="async"
                 className={craftsmanshipImage}
                 draggable={false}
               />

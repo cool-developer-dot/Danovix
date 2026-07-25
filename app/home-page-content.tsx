@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 
+import { IsoEffects } from "@/components/diagnostics/IsoEffects";
 import { HeroAmbientLayer } from "@/components/hero/hero-ambient-layer";
 import { HeroBackground } from "@/components/hero/hero-background";
 import { HeroAnimator } from "@/components/hero/HeroAnimator";
@@ -79,6 +80,7 @@ export function HomePageContent() {
 
   return (
     <>
+      <IsoEffects />
       <main
         id="main-content"
         data-awaiting-opening={awaitingOpening ? "true" : undefined}

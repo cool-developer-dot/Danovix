@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Color, BufferAttribute, BufferGeometry, type Points } from "three";
 
 import { productJourneyState } from "@/lib/product-journey/store";
+import { isoIs } from "@/lib/diagnostics/iso";
 
 type JourneyParticlesProps = {
   maxOpacity: number;
@@ -19,7 +20,21 @@ function particleRand(seed: number) {
 }
 
 export function JourneyParticles({ maxOpacity }: JourneyParticlesProps) {
+  if (isoIs("particles")) return null;
+
+  return <JourneyParticlesInner maxOpacity={maxOpacity} />;
+}
+
+function JourneyParticlesInner({ maxOpacity }: JourneyParticlesProps) {
   const pointsRef = useRef<Points>(null);
+  const viewportDimsRef = useRef<{
+    width: number;
+    height: number;
+    z: number;
+    halfH: number;
+    halfW: number;
+  } | null>(null);
+
   const { geometry, seeds, base } = useMemo(() => {
     const positions = new Float32Array(COUNT * 3);
     const seeds = new Float32Array(COUNT);
@@ -47,7 +62,7 @@ export function JourneyParticles({ maxOpacity }: JourneyParticlesProps) {
 
   const color = useMemo(() => new Color("#d6c49e"), []);
 
-  useFrame(({ clock, camera, size }) => {
+  useFrame(({ clock, camera, size, invalidate }) => {
     const points = pointsRef.current;
     if (!points) return;
 
@@ -55,20 +70,37 @@ export function JourneyParticles({ maxOpacity }: JourneyParticlesProps) {
     const opacity = state.canvasVisible
       ? Math.min(maxOpacity, state.particlesOpacity)
       : 0;
-    points.visible = opacity > 0.01;
+    const visible = opacity > 0.01;
+    points.visible = visible;
 
-    if (!points.visible) return;
+    if (!visible) return;
 
     const mat = points.material as { opacity?: number };
-    if (mat) mat.opacity = opacity;
+    if (mat && mat.opacity !== opacity) mat.opacity = opacity;
 
-    const dist = camera.position.z;
-    const vFov = 35 * (Math.PI / 180);
-    const halfH = Math.tan(vFov / 2) * dist;
-    const halfW = halfH * (size.width / Math.max(1, size.height));
+    let dims = viewportDimsRef.current;
+    if (
+      !dims ||
+      dims.width !== size.width ||
+      dims.height !== size.height ||
+      dims.z !== camera.position.z
+    ) {
+      const dist = camera.position.z;
+      const vFov = 35 * (Math.PI / 180);
+      const halfH = Math.tan(vFov / 2) * dist;
+      const halfW = halfH * (size.width / Math.max(1, size.height));
+      dims = {
+        width: size.width,
+        height: size.height,
+        z: dist,
+        halfH,
+        halfW,
+      };
+      viewportDimsRef.current = dims;
+    }
 
-    points.position.x = (state.x - 0.5) * 2 * halfW;
-    points.position.y = (0.5 - state.y) * 2 * halfH - 0.35 * state.scale;
+    points.position.x = (state.x - 0.5) * 2 * dims.halfW;
+    points.position.y = (0.5 - state.y) * 2 * dims.halfH - 0.35 * state.scale;
     points.position.z = -0.05;
 
     const t = clock.elapsedTime;
@@ -79,6 +111,9 @@ export function JourneyParticles({ maxOpacity }: JourneyParticlesProps) {
       arr[idx] = base[idx] + Math.cos(t * 0.22 + seeds[i]) * 0.02;
     }
     points.geometry.attributes.position.needsUpdate = true;
+
+    /* Particles animate on clock — keep demand loop alive while visible */
+    invalidate();
   });
 
   return (

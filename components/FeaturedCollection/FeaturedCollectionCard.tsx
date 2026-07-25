@@ -57,7 +57,7 @@ export function FeaturedCollectionCard({
                 frames={product.showcaseFrames}
                 alt={product.imageAlt}
                 productKey={product.id}
-                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 88vw, 860px"
+                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 88vw, 720px"
                 viewportClassName="h-full w-full"
                 imageClassName={featuredImage}
               />

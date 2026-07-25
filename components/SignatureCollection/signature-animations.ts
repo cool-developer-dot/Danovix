@@ -153,11 +153,10 @@ export function useSignatureAnimations(
       editorialPlayedRef.current = true;
 
       const { default: gsap } = await import("gsap");
-      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
       if (cancelled) return;
 
-      /* Ensure ST measurements are current after the bag lands */
-      scheduleScrollTriggerRefresh(ScrollTrigger);
+      /* Intentionally no ScrollTrigger.refresh() — landing does not
+       * change layout; refresh during scroll causes a main-thread hitch. */
 
       const { duration, delay, ease, y, clipY, featureX } =
         SIGNATURE_ANIMATION.editorial;

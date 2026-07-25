@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { peekHomeHash } from "@/lib/navigation/home-hash";
 import { useDeferredMount } from "@/lib/hooks/use-deferred-mount";
 import { cn } from "@/lib/cn";
+import { isoIs } from "@/lib/diagnostics/iso";
 
 type DeferredSectionProps = {
   children: ReactNode;
@@ -34,9 +35,11 @@ export function DeferredSection({
   className,
   "aria-hidden": ariaHidden,
 }: DeferredSectionProps) {
+  /* Isolation: "deferred" mode forces eager mount of all sections. */
+  const forceEager = eager || isoIs("deferred");
   const { sentinelRef, mounted } = useDeferredMount({
     rootMargin,
-    eager,
+    eager: forceEager,
     hashId: id,
     peekHash: peekHomeHash,
   });

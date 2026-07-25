@@ -82,8 +82,8 @@ type JourneyListener = (state: ProductJourneyState) => void;
 const listeners = new Set<JourneyListener>();
 
 /** Skip notify when pose hasn't moved enough to matter on screen. */
-const POSE_EPS = 1e-5;
-const OPACITY_EPS = 2e-3;
+const POSE_EPS = 2.5e-5;
+const OPACITY_EPS = 3e-3;
 
 export function subscribeProductJourney(listener: JourneyListener) {
   listeners.add(listener);

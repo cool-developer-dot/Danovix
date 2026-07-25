@@ -6,6 +6,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { NavbarLogo } from "@/components/brand/navbar-logo";
 import { cn } from "@/lib/cn";
+import {
+  productJourneyState,
+  subscribeProductJourney,
+} from "@/lib/product-journey/store";
 
 import { useNavbarEntrance } from "./HeroAnimations";
 import { NAV_LINKS } from "./constants";
@@ -17,10 +21,37 @@ type HeroNavbarProps = {
   animate?: boolean;
 };
 
+/**
+ * Frosted navbar without sampling the live WebGL layer through backdrop-filter.
+ * When the journey canvas is compositing under the header, use an equivalent
+ * translucent fill (slightly higher opacity) — identical luxury read, far
+ * cheaper on Safari. Backdrop-blur returns once the canvas is hidden.
+ */
+function useJourneyCanvasUnderNav() {
+  const [underNav, setUnderNav] = useState(false);
+
+  useEffect(() => {
+    const sync = () => {
+      setUnderNav(
+        productJourneyState.canvasVisible &&
+          document.documentElement.classList.contains("product-journey-active"),
+      );
+    };
+    sync();
+    const unsub = subscribeProductJourney(sync);
+    return () => {
+      unsub();
+    };
+  }, []);
+
+  return underNav;
+}
+
 export function HeroNavbar({ className, animate = true }: HeroNavbarProps) {
   const navbarRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const journeyUnderNav = useJourneyCanvasUnderNav();
 
   useNavbarEntrance(navbarRef, animate);
 
@@ -49,16 +80,21 @@ export function HeroNavbar({ className, animate = true }: HeroNavbarProps) {
     };
   }, [mobileOpen]);
 
+  const scrolledOverWebgl = scrolled && journeyUnderNav;
+  const scrolledOverDom = scrolled && !journeyUnderNav;
+
   return (
     <>
       <header
         ref={navbarRef}
         data-hero-animate="navbar"
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transform-gpu hero-fade-target transition-[background-color,backdrop-filter,border-color,box-shadow] duration-300 ease-out",
-          scrolled
-            ? "border-b border-danovix-background/10 bg-danovix-primary/72 shadow-[0_8px_32px_rgba(17,17,17,0.18)] backdrop-blur-xl"
-            : "border-b border-transparent bg-transparent shadow-none",
+          "fixed inset-x-0 top-0 z-50 transform-gpu hero-fade-target transition-[background-color,border-color,box-shadow] duration-300 ease-out",
+          scrolledOverWebgl &&
+            "border-b border-danovix-background/10 bg-danovix-primary/[0.88] shadow-[0_8px_32px_rgba(17,17,17,0.18)]",
+          scrolledOverDom &&
+            "border-b border-danovix-background/10 bg-danovix-primary/72 shadow-[0_8px_32px_rgba(17,17,17,0.18)] backdrop-blur-xl",
+          !scrolled && "border-b border-transparent bg-transparent shadow-none",
           className,
         )}
       >

@@ -84,10 +84,11 @@ export function ProductShowcase({
                 alt={index === 0 ? alt : ""}
                 width={frame.width}
                 height={frame.height}
-                quality={80}
+                quality={85}
                 priority={priority && index === 0}
                 loading={priority && index === 0 ? undefined : "lazy"}
                 sizes={sizes}
+                decoding="async"
                 className={cn(showcaseImage, imageClassName)}
                 draggable={false}
               />

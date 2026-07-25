@@ -4,8 +4,8 @@ import type { CSSProperties, SVGProps } from "react";
 import { cn } from "@/lib/cn";
 
 export const LOGO_SRC = "/logo.webp";
-export const LOGO_WIDTH = 1536;
-export const LOGO_HEIGHT = 1024;
+export const LOGO_WIDTH = 1024;
+export const LOGO_HEIGHT = 683;
 
 type DanovixLogoProps = {
   className?: string;

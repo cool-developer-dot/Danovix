@@ -7,7 +7,7 @@ export const signatureStage = cn(
 );
 
 export const signatureCamera = cn(
-  "signature-piece-camera absolute inset-0 will-change-transform",
+  "signature-piece-camera absolute inset-0",
 );
 
 export const signatureBackground = cn(
@@ -43,7 +43,7 @@ export const signatureEditorialCol = cn(
 );
 
 export const signatureEditorial = cn(
-  "signature-piece-editorial flex w-full max-w-[420px] flex-col will-change-transform",
+  "signature-piece-editorial flex w-full max-w-[420px] flex-col",
   "max-lg:mx-auto max-lg:items-center",
 );
 

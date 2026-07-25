@@ -100,8 +100,8 @@ export function LifestyleCard({
               alt={item.alt}
               width={item.width}
               height={item.height}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 48vw"
-              quality={80}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 70vw, (max-width: 1440px) 48vw, 640px"
+              quality={82}
               className={cn(
                 lifestyleImage,
                 isProduct
@@ -109,6 +109,7 @@ export function LifestyleCard({
                   : "absolute inset-0 object-cover",
               )}
               loading={priority ? "eager" : "lazy"}
+              decoding="async"
               priority={priority}
             />
           </div>

@@ -27,6 +27,10 @@ import {
   type Vec2,
 } from "@/lib/product-journey/math";
 import {
+  applyHeroChapterExitAtScroll,
+  refreshHeroChapterExitRange,
+} from "@/lib/product-journey/hero-chapter-exit";
+import {
   patchProductJourney,
   productJourneyState,
 } from "@/lib/product-journey/store";
@@ -96,12 +100,28 @@ export function useProductJourneyController(enabled: boolean) {
     const setCanvasVisible = (visible: boolean) => {
       /* notify so WebGL frame gate + interaction can pause/resume */
       patchProductJourney({ canvasVisible: visible }, true);
+      const root = document.documentElement;
+      if (visible) {
+        root.dataset.journeyCanvas = "visible";
+      } else {
+        root.dataset.journeyCanvas = "hidden";
+      }
       const host = document.querySelector(
         '[data-product-journey="canvas"]',
       ) as HTMLElement | null;
       if (!host) return;
-      host.style.opacity = visible ? "1" : "0";
-      host.style.visibility = visible ? "visible" : "hidden";
+      if (visible) {
+        host.style.display = "";
+        host.style.opacity = "1";
+        host.style.visibility = "visible";
+        host.style.pointerEvents = "none";
+      } else {
+        /* Drop the fullscreen compositor layer entirely once the journey ends.
+         * Visual is identical (already opacity 0); Safari stops sampling it. */
+        host.style.opacity = "0";
+        host.style.visibility = "hidden";
+        host.style.display = "none";
+      }
     };
 
     /** Concealed inside the marble podium — opening center, below the lip */
@@ -228,9 +248,8 @@ export function useProductJourneyController(enabled: boolean) {
           detail: { type: "landed" },
         }),
       );
-      void import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
-        scheduleScrollTriggerRefresh(ScrollTrigger);
-      });
+      /* Never ScrollTrigger.refresh() here — landing does not change layout,
+       * and refresh during active scrub forces synchronous layout hitch. */
     };
 
     const markContentDeparted = () => {
@@ -390,7 +409,9 @@ export function useProductJourneyController(enabled: boolean) {
       if (!productJourneyState.revealed) return;
       if (productJourneyState.phase === "emerging") return;
 
-      refreshAnchors();
+      refreshAnchors(
+        options?.force ? { freezeSignature: true } : undefined,
+      );
       const anchors = anchorsRef.current;
       if (!anchors) return;
 
@@ -495,7 +516,7 @@ export function useProductJourneyController(enabled: boolean) {
       killIdle();
 
       /* Snap exactly onto marble first — no Y bounce */
-      refreshAnchors();
+      refreshAnchors({ freezeSignature: true });
       const anchors = anchorsRef.current;
       if (anchors) {
         patchProductJourney(
@@ -781,7 +802,14 @@ export function useProductJourneyController(enabled: boolean) {
           );
       }
 
+      refreshHeroChapterExitRange(heroSection);
+
       ctx = gsap.context(() => {
+        /*
+         * ONE master scrub for Hero → Signature.
+         * Journey pose + hero chrome exit both sample this progress —
+         * no overlapping scrub timelines.
+         */
         const tween = gsap.to(proxy, {
           t: 1,
           ease: "none",
@@ -793,12 +821,15 @@ export function useProductJourneyController(enabled: boolean) {
             scrub: PRODUCT_JOURNEY.scroll.scrub,
             invalidateOnRefresh: true,
             anticipatePin: 0,
-            onUpdate: () => {
+            onUpdate: (self) => {
               applyProgress(proxy.t);
+              applyHeroChapterExitAtScroll(self.scroll());
             },
             onRefresh: () => {
               refreshAnchors({ freezeHero: true, freezeSignature: true });
+              refreshHeroChapterExitRange(heroSection);
               applyProgress(proxy.t);
+              applyHeroChapterExitAtScroll(window.scrollY);
             },
           },
         });
@@ -893,6 +924,7 @@ export function useProductJourneyController(enabled: boolean) {
       killIdle();
       scrollTweenRef.current = null;
       ctx?.revert();
+      delete document.documentElement.dataset.journeyCanvas;
       patchProductJourney({
         phase: "concealed",
         revealed: false,

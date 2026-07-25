@@ -62,7 +62,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "soho-walk",
     kind: "lifestyle",
-    src: "/community/01-pink-coussin.jpg",
+    src: "/community/01-pink-coussin.webp",
     alt: "Quilted pink handbag with gold chain, styled in a luxury unboxing moment",
     caption: "New Season",
     likes: 4280,
@@ -77,7 +77,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "cafe-moment",
     kind: "lifestyle",
-    src: "/community/02-pink-unboxing.jpg",
+    src: "/community/02-pink-unboxing.webp",
     alt: "Pink quilted handbag presented with signature packaging and gold hardware",
     caption: "Just Arrived",
     likes: 3120,
@@ -98,7 +98,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "gallery-pause",
     kind: "lifestyle",
-    src: "/community/03-taupe-ribbons.jpg",
+    src: "/community/03-taupe-ribbons.webp",
     alt: "Taupe leather handbag in white presentation box with silk ribbons",
     caption: "The Unboxing",
     likes: 5610,
@@ -122,7 +122,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "leather-detail",
     kind: "lifestyle",
-    src: "/community/04-taupe-lock.jpg",
+    src: "/community/04-taupe-lock.webp",
     alt: "Taupe pebbled leather handbag with gold lock and protective wrap",
     caption: "First Look",
     likes: 4890,
@@ -143,7 +143,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "airport-lounge",
     kind: "lifestyle",
-    src: "/community/05-bordeaux-kelly.jpg",
+    src: "/community/05-bordeaux-kelly.webp",
     alt: "Bordeaux leather handbag nestled in orange packaging with gold hardware",
     caption: "Evening Edit",
     likes: 3740,
@@ -167,7 +167,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "brunch-table",
     kind: "lifestyle",
-    src: "/community/06-olive-unboxing.jpg",
+    src: "/community/06-olive-unboxing.webp",
     alt: "Olive green leather handbag in signature orange and white packaging",
     caption: "Weekend Ease",
     likes: 2980,
@@ -188,7 +188,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "hotel-corridor",
     kind: "lifestyle",
-    src: "/community/07-forest-unboxing.jpg",
+    src: "/community/07-forest-unboxing.webp",
     alt: "Forest green leather handbag revealed in luxury presentation box",
     caption: "Quiet Luxury",
     likes: 4520,
@@ -212,7 +212,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "hands-holding",
     kind: "lifestyle",
-    src: "/community/08-atelier-mahogany.jpg",
+    src: "/community/08-atelier-mahogany.webp",
     alt: "Mahogany leather handbag on the artisan workbench with gold turn-lock",
     caption: "In the Atelier",
     likes: 6120,
@@ -227,7 +227,7 @@ export const COMMUNITY_ITEMS: readonly EditorialItem[] = [
   {
     id: "stitch-detail",
     kind: "lifestyle",
-    src: "/community/09-pearl-bucket.jpg",
+    src: "/community/09-pearl-bucket.webp",
     alt: "Black quilted mini bag with pearls and gold chain on a gallery wall",
     caption: "Evening Glow",
     likes: 5380,

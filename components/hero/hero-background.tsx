@@ -33,7 +33,7 @@ export function HeroBackground({
           fill
           priority
           fetchPriority="high"
-          quality={80}
+          quality={85}
           sizes="100vw"
           placeholder="blur"
           blurDataURL={HERO_BLUR_DATA_URL}

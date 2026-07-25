@@ -20,7 +20,7 @@ function buildEditorialFrame(
   return [
     {
       id: "hero",
-      src: `/featured/${productSlug}/hero.jpg`,
+      src: `/featured/${productSlug}/hero.webp`,
       width,
       height,
     },

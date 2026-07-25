@@ -1,8 +1,14 @@
 "use client";
 
-import { ContactShadows } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+  type RefObject,
+} from "react";
 import type { Group } from "three";
 
 import {
@@ -11,10 +17,22 @@ import {
 } from "@/lib/performance/device";
 import { PRODUCT_JOURNEY } from "@/lib/product-journey/constants";
 import {
+  applyJourneyHostBounds,
+  computeJourneyHostBounds,
+  fullViewportBounds,
+} from "@/lib/product-journey/compositor-bounds";
+import {
+  bindJourneyInvalidate,
+  requestJourneyRender,
+  setJourneyRenderEnabled,
+} from "@/lib/product-journey/render-scheduler";
+import {
   productJourneyState,
   subscribeProductJourney,
 } from "@/lib/product-journey/store";
+import { isoIs } from "@/lib/diagnostics/iso";
 
+import { JourneyContactShadows } from "./JourneyContactShadows";
 import { JourneyHandbag } from "./JourneyHandbag";
 import { JourneyParticles } from "./JourneyParticles";
 import { useJourneyInteraction } from "./useJourneyInteraction";
@@ -30,11 +48,16 @@ function useIsClient() {
 function JourneyLights() {
   const keyRef = useRef<Group>(null);
 
-  useFrame(() => {
+  useFrame(({ invalidate }) => {
     const light = keyRef.current;
     if (!light) return;
     const targetX = (productJourneyState.x - 0.5) * 3.2;
-    light.position.x += (targetX - light.position.x) * 0.08;
+    const delta = targetX - light.position.x;
+    if (Math.abs(delta) < 1e-4) return;
+    light.position.x += delta * 0.08;
+    if (Math.abs(targetX - light.position.x) > 1e-3) {
+      invalidate();
+    }
   });
 
   return (
@@ -67,15 +90,16 @@ function JourneyShadow({ resolution }: { resolution: number }) {
     halfH: number;
     halfW: number;
   } | null>(null);
+  const lastPoseRef = useRef({ x: Number.NaN, y: Number.NaN, scale: Number.NaN });
 
   useFrame(({ camera, size }) => {
     const group = ref.current;
     if (!group) return;
     const state = productJourneyState;
-    group.visible =
+    const visible =
       state.canvasVisible && state.revealed && state.shadowOpacity > 0.05;
-
-    if (!group.visible) return;
+    group.visible = visible;
+    if (!visible) return;
 
     let dims = viewportDimsRef.current;
     if (
@@ -98,44 +122,60 @@ function JourneyShadow({ resolution }: { resolution: number }) {
       viewportDimsRef.current = dims;
     }
 
-    group.position.x = (state.x - 0.5) * 2 * dims.halfW;
-    group.position.y = (0.5 - state.y) * 2 * dims.halfH - 0.52 * state.scale;
-    group.scale.setScalar(0.85 + state.scale * 0.2);
+    const nextX = (state.x - 0.5) * 2 * dims.halfW;
+    const nextY = (0.5 - state.y) * 2 * dims.halfH - 0.52 * state.scale;
+    const nextScale = 0.85 + state.scale * 0.2;
+    const last = lastPoseRef.current;
+
+    if (
+      last.x === nextX &&
+      last.y === nextY &&
+      last.scale === nextScale
+    ) {
+      return;
+    }
+
+    last.x = nextX;
+    last.y = nextY;
+    last.scale = nextScale;
+    group.position.x = nextX;
+    group.position.y = nextY;
+    group.scale.setScalar(nextScale);
   });
 
   return (
     <group ref={ref}>
-      <ContactShadows
-        opacity={0.5}
-        scale={3.5}
-        blur={2.6}
-        far={2.5}
-        resolution={resolution}
-        color="#000000"
-      />
+      {isoIs("shadows") ? null : (
+        <JourneyContactShadows resolution={resolution} />
+      )}
     </group>
   );
 }
 
 /**
- * Keep the WebGL loop in demand mode — invalidate only when the journey store
- * changes. Identical visuals; far less GPU work while the bag is static.
+ * Demand-mode WebGL: invalidate at most once per frame when the journey store
+ * reports a visual change. Avoids duplicate renders from multi-fire scrub ticks.
  */
 function JourneyFrameGate() {
   const setFrameloop = useThree((s) => s.setFrameloop);
   const invalidate = useThree((s) => s.invalidate);
 
   useEffect(() => {
+    bindJourneyInvalidate(() => {
+      invalidate();
+    });
+
     const sync = () => {
       const shouldPaint =
         productJourneyState.canvasVisible &&
         document.visibilityState === "visible";
+      setJourneyRenderEnabled(shouldPaint);
       if (!shouldPaint) {
         setFrameloop("never");
         return;
       }
       setFrameloop("demand");
-      invalidate();
+      requestJourneyRender();
     };
 
     sync();
@@ -144,11 +184,52 @@ function JourneyFrameGate() {
     return () => {
       unsub();
       document.removeEventListener("visibilitychange", sync);
+      bindJourneyInvalidate(null);
+      setJourneyRenderEnabled(false);
       setFrameloop("never");
     };
   }, [setFrameloop, invalidate]);
 
   return null;
+}
+
+/**
+ * Keep the fixed host clipped to the bag footprint so Safari composites a
+ * small layer. Inner viewport stays full window size — projection unchanged.
+ */
+function useJourneyCompositorBounds(
+  hostRef: RefObject<HTMLDivElement | null>,
+  viewportRef: RefObject<HTMLDivElement | null>,
+  active: boolean,
+) {
+  useEffect(() => {
+    if (!active) return;
+
+    let raf = 0;
+    const sync = () => {
+      raf = 0;
+      const host = hostRef.current;
+      const viewport = viewportRef.current;
+      if (!host || !viewport) return;
+
+      const bounds = computeJourneyHostBounds() ?? fullViewportBounds();
+      applyJourneyHostBounds(host, viewport, bounds);
+    };
+
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(sync);
+    };
+
+    sync();
+    const unsub = subscribeProductJourney(schedule);
+    window.addEventListener("resize", schedule, { passive: true });
+    return () => {
+      unsub();
+      window.removeEventListener("resize", schedule);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [hostRef, viewportRef, active]);
 }
 
 type ProductJourneyCanvasProps = {
@@ -157,8 +238,10 @@ type ProductJourneyCanvasProps = {
 
 export function ProductJourneyCanvas({ active }: ProductJourneyCanvasProps) {
   const canvasHostRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const hitRef = useRef<HTMLDivElement>(null);
   useJourneyInteraction(hitRef, active);
+  useJourneyCompositorBounds(canvasHostRef, viewportRef, active);
 
   const dpr = useMemo(() => getPreferredDpr(1.5), []);
   const shadowResolution = useMemo(() => {
@@ -175,60 +258,72 @@ export function ProductJourneyCanvas({ active }: ProductJourneyCanvasProps) {
 
   useEffect(() => {
     if (!active) return;
-    document.documentElement.classList.add("product-journey-active");
+    const root = document.documentElement;
+    root.classList.add("product-journey-active");
+    root.dataset.journeyCanvas = "visible";
     return () => {
-      document.documentElement.classList.remove("product-journey-active");
+      root.classList.remove("product-journey-active");
+      delete root.dataset.journeyCanvas;
     };
   }, [active]);
 
   if (!active) return null;
 
   return (
-    <div
-      ref={canvasHostRef}
-      data-product-journey="canvas"
-      className="product-journey-canvas pointer-events-none fixed inset-0 z-[30] transition-[opacity,visibility] duration-500 ease-out [clip-path:none]"
-      aria-hidden="true"
-      style={{ clipPath: "none", WebkitClipPath: "none" }}
-    >
-      {mounted && (
-        <Canvas
-          className="h-full w-full"
-          dpr={dpr}
-          frameloop="never"
-          gl={{
-            antialias: true,
-            alpha: true,
-            powerPreference: "high-performance",
-            stencil: false,
-            depth: true,
-          }}
-          camera={{ position: [0, 0, 5], fov: 35, near: 0.1, far: 40 }}
-          style={{ pointerEvents: "none" }}
-          onCreated={({ gl }) => {
-            gl.setClearColor(0x000000, 0);
-          }}
+    <>
+      <div
+        ref={canvasHostRef}
+        data-product-journey="canvas"
+        className="product-journey-canvas pointer-events-none fixed left-0 top-0 z-[30] overflow-hidden"
+        style={{ width: "100vw", height: "100vh" }}
+        aria-hidden="true"
+      >
+        {/* Full-viewport WebGL child — positioned so bag math stays viewport-space */}
+        <div
+          ref={viewportRef}
+          className="product-journey-viewport absolute left-0 top-0"
+          style={{ width: "100vw", height: "100vh" }}
         >
-          <JourneyFrameGate />
-          <Suspense fallback={null}>
-            <JourneyLights />
-            <JourneyHandbag />
-            <JourneyParticles
-              maxOpacity={PRODUCT_JOURNEY.particles.maxOpacity}
-            />
-            <JourneyShadow resolution={shadowResolution} />
-          </Suspense>
-        </Canvas>
-      )}
+          {mounted && (
+            <Canvas
+              className="h-full w-full"
+              dpr={dpr}
+              frameloop="never"
+              gl={{
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance",
+                stencil: false,
+                depth: true,
+              }}
+              camera={{ position: [0, 0, 5], fov: 35, near: 0.1, far: 40 }}
+              style={{ pointerEvents: "none" }}
+              onCreated={({ gl }) => {
+                gl.setClearColor(0x000000, 0);
+              }}
+            >
+              <JourneyFrameGate />
+              <Suspense fallback={null}>
+                <JourneyLights />
+                <JourneyHandbag />
+                <JourneyParticles
+                  maxOpacity={PRODUCT_JOURNEY.particles.maxOpacity}
+                />
+                <JourneyShadow resolution={shadowResolution} />
+              </Suspense>
+            </Canvas>
+          )}
+        </div>
+      </div>
 
-      {/* Compact grab zone around the bag only — editorial text stays selectable */}
+      {/* Hit target stays full-viewport fixed — not clipped with the canvas host */}
       <div
         ref={hitRef}
         data-product-journey="interaction-hit"
-        className="pointer-events-none absolute left-0 top-0 z-[31] touch-none"
+        className="pointer-events-none fixed left-0 top-0 z-[31] touch-none"
         style={{ width: 0, height: 0 }}
         aria-hidden="true"
       />
-    </div>
+    </>
   );
 }
