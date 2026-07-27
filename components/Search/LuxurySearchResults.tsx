@@ -10,7 +10,10 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { ExperienceAiCard } from "@/components/Experience/ExperienceAiCard";
+import { ExperienceEditorialGrid } from "@/components/Experience/ExperienceEditorialGrid";
 import { cn } from "@/lib/cn";
+import { EXPERIENCE_SEARCH_EMPTY } from "@/lib/experience/constants";
 import {
   RESULTS_COPY,
   SEARCH_EMPTY,
@@ -115,6 +118,19 @@ export function LuxurySearchResults({
             {SEARCH_EMPTY.cta}
             <span aria-hidden="true">→</span>
           </Link>
+          <ExperienceEditorialGrid
+            title="Trending Collections"
+            items={EXPERIENCE_SEARCH_EMPTY.trending}
+            className="mt-12 w-full max-w-[720px]"
+          />
+          <ExperienceAiCard
+            eyebrow={EXPERIENCE_SEARCH_EMPTY.ai.eyebrow}
+            heading={EXPERIENCE_SEARCH_EMPTY.ai.heading}
+            description={EXPERIENCE_SEARCH_EMPTY.ai.description}
+            cta={EXPERIENCE_SEARCH_EMPTY.ai.cta}
+            ctaHref={EXPERIENCE_SEARCH_EMPTY.ai.ctaHref}
+            className="mx-auto mt-10 w-full max-w-[520px]"
+          />
         </div>
       </section>
     );

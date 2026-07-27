@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { ExperienceAiCard } from "@/components/Experience/ExperienceAiCard";
+import { ExperienceEditorialGrid } from "@/components/Experience/ExperienceEditorialGrid";
+import { EXPERIENCE_RESERVED_EMPTY } from "@/lib/experience/constants";
 import {
   RESERVED_EMPTY,
   TRUST_CHIPS,
@@ -96,6 +99,19 @@ export function ReservedEmptyState() {
         {RESERVED_EMPTY.cta}
         <span aria-hidden="true">→</span>
       </Link>
+      <ExperienceEditorialGrid
+        title="Begin With"
+        items={EXPERIENCE_RESERVED_EMPTY.featured}
+        className="mt-12 w-full max-w-[720px]"
+      />
+      <ExperienceAiCard
+        eyebrow={EXPERIENCE_RESERVED_EMPTY.ai.eyebrow}
+        heading={EXPERIENCE_RESERVED_EMPTY.ai.heading}
+        description={EXPERIENCE_RESERVED_EMPTY.ai.description}
+        cta={EXPERIENCE_RESERVED_EMPTY.ai.cta}
+        ctaHref={EXPERIENCE_RESERVED_EMPTY.ai.ctaHref}
+        className="mx-auto mt-10 w-full max-w-[520px]"
+      />
     </div>
   );
 }

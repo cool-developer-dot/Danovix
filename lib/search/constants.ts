@@ -330,7 +330,7 @@ export const AI_EDITORIAL = {
 export const SEARCH_EMPTY = {
   heading: ["We Couldn't Find", "That Piece."] as const,
   description:
-    "Explore our curated collections or allow our AI Concierge to help you discover the perfect alternative.",
+    "Try another search, or explore our curated collections for timeless inspiration.",
   cta: "Discover Collection",
   ctaHref: "/collection",
 } as const;

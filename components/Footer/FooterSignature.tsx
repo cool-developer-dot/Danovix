@@ -1,4 +1,10 @@
-import { FOOTER_JOURNEY, FOOTER_SIGNATURE } from "@/lib/footer/constants";
+import Link from "next/link";
+
+import {
+  FOOTER_JOURNEY,
+  FOOTER_LEGAL_LINKS,
+  FOOTER_SIGNATURE,
+} from "@/lib/footer/constants";
 
 import { FooterPayments } from "./FooterPayments";
 import {
@@ -48,6 +54,21 @@ export function FooterSignature() {
       </div>
 
       <FooterPayments />
+
+      <nav
+        aria-label="Legal"
+        className="mt-10 flex flex-wrap items-center justify-center gap-x-4 gap-y-2"
+      >
+        {FOOTER_LEGAL_LINKS.map((link) => (
+          <Link
+            key={link.id}
+            href={link.href}
+            className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-[rgb(248_247_244/0.45)] transition-colors duration-300 hover:text-[rgb(214_196_158)] focus-visible:outline-none focus-visible:text-[rgb(214_196_158)]"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
 
       <div data-footer="signature" className={footerSignature}>
         <p data-footer="signature-lead" className={footerSignatureLead}>

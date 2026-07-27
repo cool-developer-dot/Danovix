@@ -26,12 +26,26 @@ export const SIGNATURE_ANIMATION = {
   ease: "power4.out",
   /** Editorial fade-up (headline → description → CTA → features) */
   editorial: {
-    duration: 0.85,
-    delay: 0.12,
-    ease: "power4.out",
+    /** Shorter so label focus resolves before the rest of the sequence */
+    duration: 0.52,
+    delay: 0.1,
+    ease: "power3.out",
     y: 24,
     clipY: "110%",
     featureX: 28,
+  },
+  /**
+   * Gallery entrance — keep the cinematic curtain, lock focus sooner.
+   * Soft camera settle must resolve early so the product reads crisp.
+   */
+  cinematic: {
+    curtainDuration: 0.72,
+    cameraDuration: 0.42,
+    startBlur: 0,
+    blurDuration: 0.38,
+    startScale: 1.07,
+    atmosphereDuration: 0.72,
+    marbleDuration: 0.7,
   },
   duration: 0.9,
   delay: 0.12,

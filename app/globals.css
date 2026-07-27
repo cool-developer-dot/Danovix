@@ -639,6 +639,18 @@ body {
   }
 }
 
+@media (max-width: 767px) {
+  /*
+   * Mobile editorial Hero — pedestal anchors remain measurable for journey math,
+   * but stay invisible. The handbag never appears in the Hero on phones.
+   */
+  .hero-product-stage {
+    opacity: 0 !important;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
 @media (max-width: 380px) {
   .hero-product-stage {
     --hero-product-y: 72%;
@@ -958,6 +970,11 @@ body {
 
   .signature-marble-ring {
     width: 74%;
+  }
+
+  /* Rest slightly higher so the bag floats cleanly above the disc */
+  .signature-rest-anchor {
+    top: 40%;
   }
 
   .signature-piece-spotlight {
@@ -2104,6 +2121,94 @@ body {
 }
 
 
+/* ─── Customer Account Dashboard / Private Member Lounge ─── */
+
+.account-hero-bg {
+  background:
+    radial-gradient(ellipse 88% 68% at 18% 22%, rgb(198 161 91 / 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 88% 18%, rgb(214 196 158 / 0.09) 0%, transparent 50%),
+    radial-gradient(ellipse 55% 45% at 50% 100%, rgb(90 70 45 / 0.34) 0%, transparent 55%),
+    linear-gradient(165deg, #141210 0%, #0c0c0c 42%, #10100e 100%);
+  opacity: 0;
+}
+
+.account-hero-noise {
+  opacity: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  mix-blend-mode: soft-light;
+  filter: opacity(0.035);
+}
+
+.account-hero-spotlight {
+  left: 58%;
+  top: 40%;
+  width: min(68vw, 720px);
+  height: min(46vw, 460px);
+  transform: translate3d(-50%, -50%, 0);
+  background: radial-gradient(
+    circle at center,
+    rgb(214 196 158 / 0.16) 0%,
+    rgb(198 161 91 / 0.05) 36%,
+    transparent 68%
+  );
+  filter: blur(12px);
+  opacity: 0;
+}
+
+.account-hero-grain {
+  opacity: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+  mix-blend-mode: overlay;
+  filter: opacity(0.04);
+}
+
+.account-profile-card {
+  animation: account-profile-float 7.5s ease-in-out infinite;
+}
+
+@keyframes account-profile-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+.account-warm-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 12% 8%, rgb(214 196 158 / 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 45% at 92% 35%, rgb(198 161 91 / 0.1) 0%, transparent 50%),
+    linear-gradient(180deg, #f8f7f4 0%, #f5f2ec 48%, #f3efe7 100%);
+}
+
+.account-warm-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  mix-blend-mode: soft-light;
+  filter: opacity(0.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-hero-bg,
+  .account-hero-noise,
+  .account-hero-spotlight,
+  .account-hero-grain {
+    opacity: 1 !important;
+  }
+
+  .account-profile-card {
+    animation: none;
+  }
+}
+
+
 /* ─── Private Luxury Collection / Wishlist ─── */
 
 .wishlist-hero-bg {
@@ -2839,4 +2944,54 @@ body {
   background-size: 140px 140px;
   mix-blend-mode: overlay;
   filter: opacity(0.04);
+}
+
+
+/* ─── Experience states (error / loading / success) ─── */
+
+.experience-loading-bg {
+  background:
+    radial-gradient(ellipse 88% 68% at 18% 22%, rgb(198 161 91 / 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 88% 18%, rgb(214 196 158 / 0.09) 0%, transparent 50%),
+    radial-gradient(ellipse 55% 45% at 50% 100%, rgb(90 70 45 / 0.34) 0%, transparent 55%),
+    linear-gradient(165deg, #141210 0%, #0c0c0c 42%, #10100e 100%);
+}
+
+.experience-loading-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  mix-blend-mode: soft-light;
+  filter: opacity(0.035);
+}
+
+@keyframes danovix-skeleton-sweep {
+  0% {
+    transform: translate3d(-120%, 0, 0);
+  }
+  100% {
+    transform: translate3d(120%, 0, 0);
+  }
+}
+
+@keyframes danovix-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .danovix-skeleton::after {
+    animation: none !important;
+  }
+
+  [class*="animate-\\[danovix-breathe"] {
+    animation: none !important;
+  }
 }

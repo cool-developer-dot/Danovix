@@ -125,7 +125,7 @@ export function HeroNavbar({ className, animate = true }: HeroNavbarProps) {
             <div className="hidden items-center sm:flex">
               <IconButton icon={Search} label="Search" href="/search" />
               <IconButton icon={Heart} label="Private Collection" href="/wishlist" />
-              <IconButton icon={User} label="Account" href="/signup" />
+              <IconButton icon={User} label="Account" href="/account" />
               <IconButton
                 icon={ShoppingBag}
                 label="Reserved Collection"
@@ -179,7 +179,7 @@ export function HeroNavbar({ className, animate = true }: HeroNavbarProps) {
           <div className="mt-8 flex items-center">
             <IconButton icon={Search} label="Search" href="/search" />
             <IconButton icon={Heart} label="Private Collection" href="/wishlist" />
-            <IconButton icon={User} label="Account" href="/signup" />
+            <IconButton icon={User} label="Account" href="/account" />
             <IconButton
               icon={ShoppingBag}
               label="Reserved Collection"

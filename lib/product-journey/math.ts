@@ -300,9 +300,11 @@ export function measureSignatureMarbleCenter(
 
 /** Signature bag rests with bottom-center on marble visual center */
 export function signatureBagAnchor(marble: Vec2, bagHalfHeight = 0.06): Vec2 {
+  const mobile =
+    typeof window !== "undefined" && window.innerWidth < 768;
   return {
     x: marble.x,
-    /* Tiny lift so the bag never clips into the disc */
-    y: marble.y - bagHalfHeight - 0.004,
+    /* Tiny lift so the bag never clips into the disc — slightly more on phones */
+    y: marble.y - bagHalfHeight - (mobile ? 0.008 : 0.004),
   };
 }

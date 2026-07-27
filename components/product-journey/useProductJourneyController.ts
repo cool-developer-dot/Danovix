@@ -8,7 +8,10 @@ import {
   HERO_PRODUCT_EMERGE,
   HERO_PRODUCT_TIMING,
 } from "@/lib/hero-product/constants";
-import { isCoarsePointerDevice } from "@/lib/performance/device";
+import {
+  isCoarsePointerDevice,
+  isMobileEditorialJourney,
+} from "@/lib/performance/device";
 import { PRODUCT_JOURNEY } from "@/lib/product-journey/constants";
 import { scheduleScrollTriggerRefresh } from "@/lib/gsap/load";
 import {
@@ -86,6 +89,11 @@ export function useProductJourneyController(enabled: boolean) {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    /**
+     * Phones: Hero is editorial-only. Bag stays concealed until Signature
+     * docks — never emerges or travels through the Hero. Desktop untouched.
+     */
+    const mobileEditorial = isMobileEditorialJourney();
 
     const clearPortalClip = () => {
       const host = document.querySelector(
@@ -281,6 +289,8 @@ export function useProductJourneyController(enabled: boolean) {
     const applyProgress = (t: number) => {
       if (!productJourneyState.revealed) return;
       if (productJourneyState.phase === "emerging") return;
+      /* Mobile editorial: no Hero→Signature travel — dock owns the reveal */
+      if (mobileEditorial) return;
 
       const clamped = Math.min(1, Math.max(0, t));
       const pose = refreshAnchors();
@@ -406,8 +416,9 @@ export function useProductJourneyController(enabled: boolean) {
      * stays glued without layout reads every scroll tick.
      */
     const dockBagToSignature = (options?: { force?: boolean }) => {
-      if (!productJourneyState.revealed) return;
       if (productJourneyState.phase === "emerging") return;
+      /* Mobile: first dock is the reveal — allow before revealed */
+      if (!mobileEditorial && !productJourneyState.revealed) return;
 
       refreshAnchors(
         options?.force ? { freezeSignature: true } : undefined,
@@ -451,12 +462,13 @@ export function useProductJourneyController(enabled: boolean) {
           rotateY: 0,
           rotateX: 0,
           depth: 0,
-          idleRotateY: 0,
-          floatY: 0,
+          idleRotateY: alreadyLanded ? productJourneyState.idleRotateY : 0,
+          floatY: alreadyLanded ? productJourneyState.floatY : 0,
           compressY: 1,
           particlesOpacity: 0,
           shadowOpacity: 0.72,
           phase: "interactive",
+          revealed: true,
           interactiveEnabled: !isCoarsePointerDevice(),
           contentReady: true,
           canvasVisible: true,
@@ -466,13 +478,65 @@ export function useProductJourneyController(enabled: boolean) {
 
       if (!alreadyLanded) {
         markContentReady();
+        if (mobileEditorial && !prefersReducedMotion) {
+          void import("gsap").then(({ default: gsap }) => {
+            if (!cancelled && landedRef.current) {
+              void startIdle(gsap);
+            }
+          });
+        }
+      }
+    };
+
+    const concealMobileBag = () => {
+      if (!mobileEditorial) return;
+      const shouldDepart =
+        productJourneyState.contentReady || landedRef.current;
+      killIdle();
+      landedRef.current = false;
+      landingArmed = false;
+      lastDockedRef.current = null;
+      refreshAnchors();
+      const anchors = anchorsRef.current;
+      patchProductJourney(
+        {
+          revealed: false,
+          phase: "concealed",
+          progress: 0,
+          contentReady: false,
+          interactiveEnabled: false,
+          floatY: 0,
+          idleRotateY: 0,
+          compressY: 1,
+          particlesOpacity: 0,
+          shadowOpacity: 0,
+          x: anchors?.signature.x ?? productJourneyState.x,
+          y: anchors?.signature.y ?? productJourneyState.y,
+          scale: sampleJourneyScale(1),
+        },
+        true,
+      );
+      if (shouldDepart) {
+        window.dispatchEvent(
+          new CustomEvent("danovix:product-journey", {
+            detail: { type: "departed" },
+          }),
+        );
       }
     };
 
     const startIdle = async (gsap: typeof import("gsap").default) => {
       killIdle();
       if (prefersReducedMotion) return;
-      if (progressRef.current.t > 0.02) return;
+      /*
+       * Desktop: float only at hero rest.
+       * Mobile editorial: float while docked on Signature marble.
+       */
+      if (mobileEditorial) {
+        if (progressRef.current.t < 0.99 && !landedRef.current) return;
+      } else if (progressRef.current.t > 0.02) {
+        return;
+      }
 
       const idle = { floatY: 0, rotateY: 0 };
 
@@ -483,7 +547,11 @@ export function useProductJourneyController(enabled: boolean) {
         yoyo: true,
         repeat: -1,
         onUpdate: () => {
-          if (productJourneyState.progress > 0.02) return;
+          if (mobileEditorial) {
+            if (!landedRef.current && progressRef.current.t < 0.99) return;
+          } else if (productJourneyState.progress > 0.02) {
+            return;
+          }
           if (productJourneyState.phase === "emerging") return;
           patchProductJourney({ floatY: idle.floatY }, true);
         },
@@ -496,7 +564,11 @@ export function useProductJourneyController(enabled: boolean) {
         yoyo: true,
         repeat: -1,
         onUpdate: () => {
-          if (productJourneyState.progress > 0.02) return;
+          if (mobileEditorial) {
+            if (!landedRef.current && progressRef.current.t < 0.99) return;
+          } else if (productJourneyState.progress > 0.02) {
+            return;
+          }
           if (productJourneyState.phase === "emerging") return;
           patchProductJourney({ idleRotateY: idle.rotateY }, true);
         },
@@ -677,27 +749,54 @@ export function useProductJourneyController(enabled: boolean) {
 
       const emergeStart = emergeStartForPose(pose);
 
-      patchProductJourney({
-        x: emergeStart.x,
-        y: emergeStart.y,
-        scale: getJourneyScaleTargets().start,
-        screenWidthPx: pose.stageWidthPx,
-        rotateY: HERO_PRODUCT_EMERGE.startRotateYDeg,
-        rotateX: HERO_PRODUCT_EMERGE.startRotateXDeg,
-        depth: HERO_PRODUCT_EMERGE.startDepth,
-        floatY: 0,
-        idleRotateY: 0,
-        compressY: 1,
-        revealed: false,
-        phase: "concealed",
-        shadowOpacity: 0,
-        contentReady: false,
-      });
+      if (mobileEditorial) {
+        /*
+         * Mobile: keep bag concealed at the Signature rest pose.
+         * No Hero emerge / travel — first appearance is the Signature dock.
+         */
+        const anchors = anchorsRef.current;
+        const endScale = sampleJourneyScale(1);
+        patchProductJourney({
+          x: anchors?.signature.x ?? 0.5,
+          y: anchors?.signature.y ?? 0.55,
+          scale: endScale,
+          screenWidthPx: pose.stageWidthPx,
+          rotateY: 0,
+          rotateX: 0,
+          depth: 0,
+          floatY: 0,
+          idleRotateY: 0,
+          compressY: 1,
+          revealed: false,
+          phase: "concealed",
+          shadowOpacity: 0,
+          contentReady: false,
+        });
+      } else {
+        patchProductJourney({
+          x: emergeStart.x,
+          y: emergeStart.y,
+          scale: getJourneyScaleTargets().start,
+          screenWidthPx: pose.stageWidthPx,
+          rotateY: HERO_PRODUCT_EMERGE.startRotateYDeg,
+          rotateX: HERO_PRODUCT_EMERGE.startRotateXDeg,
+          depth: HERO_PRODUCT_EMERGE.startDepth,
+          floatY: 0,
+          idleRotateY: 0,
+          compressY: 1,
+          revealed: false,
+          phase: "concealed",
+          shadowOpacity: 0,
+          contentReady: false,
+        });
+      }
 
       const proxy = progressRef.current;
       proxy.t = 0;
 
-      if (prefersReducedMotion) {
+      if (mobileEditorial) {
+        /* No Hero museum rise on phones — Signature owns the first reveal */
+      } else if (prefersReducedMotion) {
         patchProductJourney({
           revealed: true,
           phase: "hero-idle",
@@ -842,7 +941,11 @@ export function useProductJourneyController(enabled: boolean) {
          */
         ScrollTrigger.create({
           trigger: signatureSection,
-          start: PRODUCT_JOURNEY.scroll.end,
+          /*
+           * Desktop: dock when scrub completes (center center).
+           * Mobile: reveal as Signature enters — bag already on marble.
+           */
+          start: mobileEditorial ? "top 78%" : PRODUCT_JOURNEY.scroll.end,
           endTrigger: signatureSection,
           end: PRODUCT_JOURNEY.scroll.hideAfterSignature,
           onEnter: () => dockBagToSignature({ force: true }),
@@ -853,7 +956,11 @@ export function useProductJourneyController(enabled: boolean) {
           onLeaveBack: () => {
             /* Scrolled back above the pedestal — travel scrub resumes */
             lastDockedRef.current = null;
-            applyProgress(progressRef.current.t);
+            if (mobileEditorial) {
+              concealMobileBag();
+            } else {
+              applyProgress(progressRef.current.t);
+            }
           },
           onRefresh: (self) => {
             if (self.isActive) dockBagToSignature({ force: true });

@@ -38,6 +38,15 @@ export function isCoarsePointerDevice(): boolean {
   return window.innerWidth < 768;
 }
 
+/**
+ * Phones only — Hero stays a clean editorial intro; the handbag appears
+ * exclusively in Signature Collection. Desktop / tablet journey unchanged.
+ */
+export function isMobileEditorialJourney(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < 768;
+}
+
 export function prefersReducedData(): boolean {
   if (typeof window === "undefined") return false;
   const connection = (

@@ -93,6 +93,17 @@ export const FOOTER_COLUMNS: readonly FooterNavColumn[] = [
     ],
   },
   {
+    id: "experiences",
+    title: "Experiences",
+    links: [
+      { id: "compare", label: "Compare", href: "/compare" },
+      { id: "discoveries", label: "Discoveries", href: "/discoveries" },
+      { id: "stylist", label: "AI Stylist", href: "/stylist" },
+      { id: "style-quiz", label: "Style Quiz", href: "/style-quiz" },
+      { id: "gift-finder", label: "Gift Finder", href: "/gift-finder" },
+    ],
+  },
+  {
     id: "company",
     title: "Company",
     links: [
@@ -108,12 +119,16 @@ export const FOOTER_COLUMNS: readonly FooterNavColumn[] = [
     id: "support",
     title: "Support",
     links: [
-      { id: "contact", label: "Contact", href: "/#contact" },
-      { id: "shipping", label: "Shipping", href: "/#faq" },
-      { id: "returns", label: "Returns", href: "/#faq" },
+      { id: "contact", label: "Contact", href: "/contact" },
+      { id: "support-policy", label: "Support", href: "/support" },
+      { id: "shipping", label: "Shipping", href: "/shipping-policy" },
+      { id: "returns", label: "Returns", href: "/refund-policy" },
       { id: "faq", label: "FAQ", href: "/#faq" },
-      { id: "privacy", label: "Privacy Policy", href: "/#contact" },
-      { id: "terms", label: "Terms", href: "/#contact" },
+      { id: "privacy", label: "Privacy Policy", href: "/privacy" },
+      { id: "terms", label: "Terms", href: "/terms" },
+      { id: "cookies", label: "Cookies", href: "/cookie-policy" },
+      { id: "security", label: "Security", href: "/security" },
+      { id: "accessibility", label: "Accessibility", href: "/accessibility" },
     ],
   },
 ] as const;
@@ -145,6 +160,18 @@ export const FOOTER_SIGNATURE = {
   copyright: "© 2026 DANOVIX" as const,
   trail: "Made for modern journeys." as const,
 } as const;
+
+export const FOOTER_LEGAL_LINKS: readonly FooterNavLink[] = [
+  { id: "privacy", label: "Privacy", href: "/privacy" },
+  { id: "terms", label: "Terms", href: "/terms" },
+  { id: "cookies", label: "Cookies", href: "/cookie-policy" },
+  { id: "shipping", label: "Shipping", href: "/shipping-policy" },
+  { id: "returns", label: "Returns", href: "/refund-policy" },
+  { id: "security", label: "Security", href: "/security" },
+  { id: "ai", label: "AI Disclosure", href: "/ai-disclosure" },
+  { id: "accessibility", label: "Accessibility", href: "/accessibility" },
+  { id: "support", label: "Support", href: "/support" },
+] as const;
 
 /** Choreographed entrance — luxury pacing. */
 export const FOOTER_ENTRANCE = {

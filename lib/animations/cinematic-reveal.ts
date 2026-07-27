@@ -28,6 +28,12 @@ type CurtainRevealConfig = {
   spotlight?: HTMLElement | null;
   duration?: number;
   ease?: string;
+  /** Override camera settle length (defaults to duration * 1.15) */
+  cameraDuration?: number;
+  /** Opening soft focus — clears via blurDuration (defaults off) */
+  startBlur?: number;
+  blurDuration?: number;
+  startScale?: number;
 };
 
 /** Cinematic curtain wipe + camera settle + spotlight bloom */
@@ -43,6 +49,10 @@ export function addCurtainReveal(
     spotlight,
     duration = CINEMATIC_CURTAIN.duration,
     ease = CINEMATIC_CURTAIN.ease,
+    cameraDuration = duration * 1.15,
+    startBlur = 0,
+    blurDuration = Math.min(cameraDuration, duration * 0.55),
+    startScale = 1.09,
   } = config;
 
   gsapInstance.set(stage, {
@@ -63,7 +73,10 @@ export function addCurtainReveal(
 
   if (camera) {
     gsapInstance.set(camera, {
-      scale: 1.09,
+      scale: startScale,
+      ...(startBlur > 0
+        ? { filter: `blur(${startBlur}px)` }
+        : null),
       transformOrigin: "50% 42%",
       force3D: true,
     });
@@ -71,12 +84,24 @@ export function addCurtainReveal(
       camera,
       {
         scale: 1,
-        duration: duration * 1.15,
+        duration: cameraDuration,
         ease: CINEMATIC_EASE.luxury,
         force3D: true,
       },
       position,
     );
+    if (startBlur > 0) {
+      timeline.to(
+        camera,
+        {
+          filter: "blur(0px)",
+          duration: blurDuration,
+          ease: "power2.out",
+          force3D: true,
+        },
+        position,
+      );
+    }
   }
 
   if (spotlight) {
@@ -191,7 +216,7 @@ export function setPerspectiveConcealed(
 }
 
 /** Label shimmer — blur + tracking tighten */
-export function labelRevealVars(duration = 0.85, ease: string = CINEMATIC_EASE.soft) {
+export function labelRevealVars(duration = 0.52, ease: string = CINEMATIC_EASE.soft) {
   return {
     opacity: 1,
     y: 0,

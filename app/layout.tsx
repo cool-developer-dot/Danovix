@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 
 import { OpeningExperience } from "@/components/opening/OpeningExperience";
+import { CookieConsentBanner } from "@/components/Legal/CookieConsentBanner";
+import { OfflineProvider } from "@/components/Experience/OfflineExperience";
 import {
   OrganizationJsonLd,
   WebSiteJsonLd,
@@ -57,7 +59,10 @@ export default function RootLayout({
         </a>
         <OrganizationJsonLd />
         <WebSiteJsonLd />
-        <OpeningExperience>{children}</OpeningExperience>
+        <OpeningExperience>
+          <OfflineProvider>{children}</OfflineProvider>
+        </OpeningExperience>
+        <CookieConsentBanner />
       </body>
     </html>
   );

@@ -49,9 +49,9 @@ export const RESERVED_HERO = {
 } as const;
 
 export const RESERVED_EMPTY = {
-  heading: "Your Journey Begins Here.",
+  heading: "Your Next Signature Piece Awaits.",
   description:
-    "Discover timeless handbags crafted for modern women.",
+    "Every remarkable journey begins with one timeless piece.",
   cta: "Explore Collection",
   ctaHref: "/collection",
 } as const;
@@ -167,7 +167,13 @@ export const TRUST_CHIPS: readonly TrustChip[] = [
 
 export const CHECKOUT = {
   label: "Secure Checkout",
-  preparing: "Preparing Your Secure Checkout...",
+  preparing: "Preparing Secure Checkout",
+  steps: [
+    "Verifying Order",
+    "Preparing Secure Checkout",
+    "Confirming Payment",
+    "Finalizing Your Journey",
+  ] as const,
 } as const;
 
 export const PRODUCT_ACTIONS = {

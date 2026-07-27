@@ -1,7 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { CheckoutLoadingProgress } from "@/components/Experience/Skeletons";
 import { FooterDeferred } from "@/components/Footer/FooterDeferred";
 import { HeroNavbar } from "@/components/hero/HeroNavbar";
 import {
@@ -24,8 +26,6 @@ import {
   checkoutMobileBar,
   checkoutVeil,
   checkoutVeilInner,
-  checkoutVeilSpinner,
-  checkoutVeilText,
   collectionAside,
   collectionAsideSticky,
   collectionInner,
@@ -40,13 +40,18 @@ import {
   TrustExperience,
 } from "./TrustExperience";
 
+const CHECKOUT_STEP_MS = 700;
+
 export function ReservedExperience() {
+  const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
   const checkoutTimer = useRef<number | null>(null);
+  const stepTimer = useRef<number | null>(null);
   const [items, setItems] = useState<ReservedItem[]>(() =>
     RESERVED_ITEMS.map((item) => ({ ...item, chips: [...item.chips] })),
   );
   const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState(0);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useReservedAnimations(rootRef);
@@ -55,6 +60,9 @@ export function ReservedExperience() {
     return () => {
       if (checkoutTimer.current != null) {
         window.clearTimeout(checkoutTimer.current);
+      }
+      if (stepTimer.current != null) {
+        window.clearInterval(stepTimer.current);
       }
     };
   }, []);
@@ -71,7 +79,9 @@ export function ReservedExperience() {
     setItems((current) => {
       const removed = current.find((item) => item.id === id);
       if (removed) {
-        setStatusMessage(`${removed.name} removed from your reserved collection.`);
+        setStatusMessage(
+          `${removed.name} removed from your reserved collection.`,
+        );
       }
       return current.filter((item) => item.id !== id);
     });
@@ -92,19 +102,41 @@ export function ReservedExperience() {
   const handleCheckout = useCallback(() => {
     if (checkingOut || items.length === 0) return;
     setCheckingOut(true);
-    setStatusMessage(CHECKOUT.preparing);
+    setCheckoutStep(0);
+    setStatusMessage(CHECKOUT.steps[0]);
 
+    if (stepTimer.current != null) {
+      window.clearInterval(stepTimer.current);
+    }
     if (checkoutTimer.current != null) {
       window.clearTimeout(checkoutTimer.current);
     }
+
+    let step = 0;
+    stepTimer.current = window.setInterval(() => {
+      step += 1;
+      if (step >= CHECKOUT.steps.length) {
+        if (stepTimer.current != null) {
+          window.clearInterval(stepTimer.current);
+          stepTimer.current = null;
+        }
+        return;
+      }
+      setCheckoutStep(step);
+      setStatusMessage(CHECKOUT.steps[step]);
+    }, CHECKOUT_STEP_MS);
+
     checkoutTimer.current = window.setTimeout(() => {
       checkoutTimer.current = null;
+      if (stepTimer.current != null) {
+        window.clearInterval(stepTimer.current);
+        stepTimer.current = null;
+      }
+      setItems([]);
       setCheckingOut(false);
-      setStatusMessage(
-        "Your secure checkout is prepared. A private payment atelier will open here.",
-      );
-    }, 2800);
-  }, [checkingOut, items.length]);
+      router.push("/success/order");
+    }, CHECKOUT.steps.length * CHECKOUT_STEP_MS + 400);
+  }, [checkingOut, items.length, router]);
 
   const pieceCount = getPieceCount(items);
   const hasItems = items.length > 0;
@@ -188,13 +220,12 @@ export function ReservedExperience() {
           aria-labelledby="reserved-checkout-preparing"
         >
           <div className={checkoutVeilInner}>
-            <div className={checkoutVeilSpinner} aria-hidden="true" />
-            <p
-              id="reserved-checkout-preparing"
-              className={checkoutVeilText}
-            >
-              {CHECKOUT.preparing}
-            </p>
+            <div id="reserved-checkout-preparing">
+              <CheckoutLoadingProgress
+                step={checkoutStep}
+                steps={CHECKOUT.steps}
+              />
+            </div>
           </div>
         </div>
       ) : null}

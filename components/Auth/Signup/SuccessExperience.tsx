@@ -225,17 +225,38 @@ export function SuccessExperience({
         </p>
 
         {!isLogin ? (
-          <button
-            type="button"
-            data-success="item"
-            onClick={handleExplore}
-            className={successCta}
-          >
-            {SIGNUP_SUCCESS.cta}
-            <span className={successCtaArrow} aria-hidden="true">
-              →
-            </span>
-          </button>
+          <>
+            <button
+              type="button"
+              data-success="item"
+              onClick={handleExplore}
+              className={successCta}
+            >
+              {SIGNUP_SUCCESS.cta}
+              <span className={successCtaArrow} aria-hidden="true">
+                →
+              </span>
+            </button>
+            <div
+              data-success="item"
+              className="mt-6 flex flex-wrap items-center justify-center gap-3"
+            >
+              {SIGNUP_SUCCESS.secondary.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={() => {
+                    if (leaving) return;
+                    setLeaving(true);
+                    router.push(action.href);
+                  }}
+                  className="rounded-[12px] border border-[rgb(248_247_244/0.14)] bg-[rgb(248_247_244/0.03)] px-4 py-2.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-[rgb(248_247_244/0.78)] transition-[border-color,background-color,color] duration-500 hover:border-[rgb(198_161_91/0.4)] hover:text-[rgb(248_247_244)]"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </>
         ) : (
           <p
             data-success="item"

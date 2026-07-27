@@ -97,7 +97,7 @@ export function HomePageContent() {
           <HeroProductLazy animate={heroAnimate} />
           <HeroAnimator animate={heroAnimate}>
             <div className="relative z-20 flex h-full flex-col">
-              <div className="mx-auto flex h-full w-full max-w-[1600px] flex-1 flex-col px-5 pb-[min(42vh,18rem)] pt-[clamp(5.5rem,14vh,7.5rem)] sm:px-8 sm:pb-24 lg:px-12 lg:pb-16 lg:pt-[128px] xl:px-16">
+              <div className="mx-auto flex h-full w-full max-w-[1600px] flex-1 flex-col px-5 pb-16 pt-[clamp(5.5rem,14vh,7.5rem)] sm:px-8 sm:pb-24 lg:px-12 lg:pb-16 lg:pt-[128px] xl:px-16">
                 <div className="flex flex-1 items-start lg:max-w-[52%] lg:items-center">
                   <HeroContent />
                 </div>

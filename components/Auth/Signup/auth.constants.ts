@@ -211,10 +211,10 @@ export const SIGNUP_FORM = {
   terms: {
     lead: "I agree to the",
     termsLabel: "Terms of Service",
-    termsHref: "/brand",
+    termsHref: "/terms",
     and: "and",
     privacyLabel: "Privacy Policy",
-    privacyHref: "/brand",
+    privacyHref: "/privacy",
   },
   signIn: {
     lead: "Already have an account?",
@@ -333,15 +333,20 @@ export const TRUST_SIGNALS: readonly TrustSignal[] = [
 /* ---------- Success ---------- */
 
 export const SIGNUP_SUCCESS = {
-  headline: "Welcome to DANOVIX.",
-  subtitle: "Your private collection is ready.",
-  cta: "Explore the Collection",
-  ctaHref: "/",
+  headline: "Welcome To DANOVIX.",
+  subtitle: "Your private luxury journey begins today.",
+  cta: "Explore Collection",
+  ctaHref: "/collection",
+  secondary: [
+    { id: "profile", label: "Complete Profile", href: "/account/profile" },
+    { id: "stylist", label: "Meet AI Concierge", href: "/stylist" },
+    { id: "lounge", label: "Enter Your Lounge", href: "/account" },
+  ] as const,
 } as const;
 
 export const LOGIN_SUCCESS = {
   headline: "Welcome Back.",
-  subtitle: "Preparing Your Collection...",
+  subtitle: "Preparing Your Private Lounge...",
   autoMs: 1100,
 } as const;
 
@@ -349,6 +354,14 @@ export const FORGOT_SUCCESS = {
   headline: "Check Your Inbox.",
   subtitle: "A secure reset link is on its way.",
   cta: "Back to Sign In",
+} as const;
+
+export const PASSWORD_RESET_SUCCESS = {
+  headline: "You're Ready To Continue.",
+  subtitle:
+    "Your password has been updated successfully. Welcome back to your private DANOVIX experience.",
+  cta: "Continue to Dashboard",
+  ctaHref: "/account",
 } as const;
 
 /* ---------- Motion timings ---------- */

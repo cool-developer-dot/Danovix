@@ -308,36 +308,43 @@ export function useSignatureAnimations(
             stage: elements.stage,
             camera: elements.camera,
             spotlight: elements.spotlight,
+            duration: SIGNATURE_ANIMATION.cinematic.curtainDuration,
+            cameraDuration: SIGNATURE_ANIMATION.cinematic.cameraDuration,
+            startBlur: SIGNATURE_ANIMATION.cinematic.startBlur,
+            blurDuration: SIGNATURE_ANIMATION.cinematic.blurDuration,
+            startScale: SIGNATURE_ANIMATION.cinematic.startScale,
           },
           0,
         );
 
+        const atmosDur = SIGNATURE_ANIMATION.cinematic.atmosphereDuration;
+
         if (elements.bg) {
           atmosphere.to(
             elements.bg,
-            { opacity: 1, duration: 1, ease: "power4.out" },
-            0.12,
+            { opacity: 1, duration: atmosDur, ease: "power4.out" },
+            0.08,
           );
         }
         if (elements.noise) {
           atmosphere.to(
             elements.noise,
-            { opacity: 1, duration: 1, ease: "power4.out" },
-            0.12,
+            { opacity: 1, duration: atmosDur, ease: "power4.out" },
+            0.08,
           );
         }
         if (elements.vignette) {
           atmosphere.to(
             elements.vignette,
-            { opacity: 1, duration: 1, ease: "power4.out" },
-            0.14,
+            { opacity: 1, duration: atmosDur, ease: "power4.out" },
+            0.1,
           );
         }
         if (elements.ambient) {
           atmosphere.to(
             elements.ambient,
-            { opacity: 1, duration: 1, ease: "power4.out" },
-            0.2,
+            { opacity: 1, duration: atmosDur, ease: "power4.out" },
+            0.14,
           );
         }
         if (elements.marble) {
@@ -345,10 +352,10 @@ export function useSignatureAnimations(
             elements.marble,
             {
               opacity: 1,
-              duration: 1.05,
+              duration: SIGNATURE_ANIMATION.cinematic.marbleDuration,
               ease: "power4.out",
             },
-            0.22,
+            0.14,
           );
         }
 

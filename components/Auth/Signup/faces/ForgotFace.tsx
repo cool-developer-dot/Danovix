@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { cn } from "@/lib/cn";
 
-import { FORGOT_FORM } from "../auth.constants";
+import { FORGOT_FORM, FORGOT_SUCCESS } from "../auth.constants";
 import { TrustStrip } from "../TrustStrip";
 import {
   authCardHeader,
@@ -78,9 +78,7 @@ export function ForgotFace({ onGoLogin, onSent }: ForgotFaceProps) {
         <p className={authEyebrow}>{FORGOT_FORM.eyebrow}</p>
         <h2 className={authHeading}>{FORGOT_FORM.heading}</h2>
         <p className={authSubtitle}>
-          {sent
-            ? "If an account exists for this email, a secure reset link is on its way."
-            : FORGOT_FORM.subtitle}
+          {sent ? FORGOT_SUCCESS.subtitle : FORGOT_FORM.subtitle}
         </p>
       </div>
 
@@ -145,7 +143,23 @@ export function ForgotFace({ onGoLogin, onSent }: ForgotFaceProps) {
             )}
           </button>
         </form>
-      ) : null}
+      ) : (
+        <div className="mt-2 text-center">
+          <p className="font-serif text-[clamp(1.4rem,3.5vw,1.75rem)] font-light text-[rgb(248_247_244)]">
+            {FORGOT_SUCCESS.headline}
+          </p>
+          <p className="mx-auto mt-3 max-w-[320px] text-[13px] leading-relaxed text-[rgb(248_247_244/0.55)]">
+            Once you complete the reset, you&apos;ll return ready to continue
+            your private DANOVIX experience.
+          </p>
+          <a
+            href="/success/password"
+            className="mt-6 inline-flex font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-[rgb(214_196_158)] underline-offset-4 hover:underline"
+          >
+            Preview updated access
+          </a>
+        </div>
+      )}
 
       <p className={cn(signInRow, sent && "mt-8")} data-signup="signin">
         <button type="button" onClick={onGoLogin} className={signInLink}>

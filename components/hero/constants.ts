@@ -3,9 +3,10 @@ import { Infinity, Layers, ShieldCheck } from "lucide-react";
 
 export const NAV_LINKS = [
   { label: "Collection", href: "/collection" },
+  { label: "Stylist", href: "/stylist" },
+  { label: "Gifts", href: "/gift-finder" },
   { label: "About", href: "/#about" },
   { label: "Craftsmanship", href: "/#craftsmanship" },
-  { label: "Journal", href: "/#journal" },
   { label: "Contact", href: "/#contact" },
 ] as const;
 

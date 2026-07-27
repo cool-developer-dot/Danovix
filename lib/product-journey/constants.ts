@@ -76,8 +76,9 @@ export const PRODUCT_JOURNEY = {
     settleDownPx: 0,
     compress: 0.988,
     settleDuration: 0.28,
-    contentDelay: 0.15,
-    contentProgress: 0.9,
+    /** Editorial waits less — product should read crisp sooner */
+    contentDelay: 0.06,
+    contentProgress: 0.84,
   },
   particles: {
     maxOpacity: 0.09,

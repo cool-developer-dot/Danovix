@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { cn } from "@/lib/cn";
+import { writeTermsAcceptance } from "@/lib/legal/consent";
 
 import { SIGNUP_FORM, type SignupFieldId } from "../auth.constants";
 import { PasswordStrength } from "../PasswordStrength";
@@ -107,6 +108,7 @@ export function SignupFace({ onSuccess, onGoLogin }: SignupFaceProps) {
     }
     submitTimerRef.current = window.setTimeout(() => {
       submitTimerRef.current = null;
+      writeTermsAcceptance("signup");
       setSubmitting(false);
       onSuccess();
     }, 1400);

@@ -93,7 +93,7 @@ function FooterNavAnchor({
     <Link
       href={normalized}
       onClick={handleClick}
-      scroll={false}
+      scroll={!hash}
       className={footerNavLink}
     >
       {label}
@@ -148,9 +148,10 @@ function AccordionColumn({ column }: { column: FooterNavColumn }) {
           footerAccordionPanel,
           "lg:mt-0",
           open
-            ? "max-h-80 opacity-100 pb-4"
+            ? "max-h-[min(70vh,36rem)] opacity-100 pb-4"
             : "max-h-0 opacity-0 lg:max-h-none lg:opacity-100 lg:pb-0",
-          "transition-[max-height,opacity,padding] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "overflow-hidden transition-[max-height,opacity,padding] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          open && "overflow-y-auto",
         )}
       >
         <NavLinks column={column} />

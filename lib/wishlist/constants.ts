@@ -136,9 +136,9 @@ export const WISHLIST_CURATED = {
 } as const;
 
 export const WISHLIST_EMPTY = {
-  heading: "Your Collection Awaits.",
+  heading: "Your Private Collection Awaits.",
   description:
-    "Discover timeless pieces you'll want to revisit again and again.",
+    "Save timeless pieces that inspire you, and return whenever the moment feels right.",
   cta: "Explore Collection",
   ctaHref: "/collection",
 } as const;
